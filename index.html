@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vectory 3D WebGL - High Performance Particles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-dark: #0a0a0f;
+      --bg-panel: #12121a;
+      --bg-card: #1a1a24;
+      --bg-input: #22222e;
+      --accent: #8b5cf6;
+      --accent-light: #a78bfa;
+      --accent-glow: rgba(139, 92, 246, 0.3);
+      --text: #f1f1f3;
+      --text-dim: #8888a0;
+      --text-muted: #55556a;
+      --border: #2a2a3a;
+      --success: #22c55e;
+      --warning: #f59e0b;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      min-height: 100vh;
+      display: flex;
+      color: var(--text);
+      overflow: hidden;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { 
+      background: var(--border); 
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    
+    #controls {
+      width: 340px;
+      background: var(--bg-panel);
+      padding: 24px;
+      overflow-y: auto;
+      max-height: 100vh;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    
+    #controls::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background: linear-gradient(180deg, rgba(139, 92, 246, 0.08) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+      position: relative;
+    }
+    
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+    
+    h1 { 
+      font-size: 22px; 
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text) 0%, var(--text-dim) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    h2 { 
+      font-size: 13px; 
+      color: var(--text-muted); 
+      margin-bottom: 28px; 
+      font-weight: 400;
+      position: relative;
+    }
+    
+    .section {
+      margin-bottom: 20px;
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    
+    .section:hover {
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+    
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent-light);
+      margin-bottom: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-title::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    
+    .control-group { margin-bottom: 14px; }
+    .control-group:last-child { margin-bottom: 0; }
+    
+    label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    
+    .value-display { 
+      color: var(--accent-light); 
+      font-weight: 600;
+      font-size: 12px;
+      background: rgba(139, 92, 246, 0.15);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: var(--bg-input);
+      border-radius: 3px;
+      outline: none;
+      transition: background 0.2s;
+    }
+    
+    input[type="range"]:hover {
+      background: #2a2a3a;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 8px var(--accent-glow);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+    
+    select, input[type="file"] {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+    
+    select:hover, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+      outline: none;
+    }
+    
+    input[type="color"] { 
+      width: 100%;
+      height: 40px; 
+      padding: 4px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    
+    input[type="color"]:hover {
+      border-color: var(--accent);
+    }
+    
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 2px;
+    }
+    
+    input[type="color"]::-webkit-color-swatch {
+      border-radius: 4px;
+      border: none;
+    }
+    
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+      font-family: inherit;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+    
+    button:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    #canvas-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--bg-dark);
+      position: relative;
+    }
+    
+    #canvas-container::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    #statsBar {
+      background: rgba(26, 26, 36, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 10px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      display: flex;
+      gap: 24px;
+      border: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+    
+    #statsBar span { color: var(--text-muted); font-weight: 500; }
+    
+    #fpsDisplay { 
+      color: var(--success); 
+      font-weight: 700;
+    }
+    
+    #particleCount { 
+      color: var(--accent-light); 
+      font-weight: 700;
+    }
+    
+    #canvas-wrapper { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+    
+    canvas {
+      border-radius: 16px;
+      box-shadow: 
+        0 0 0 1px var(--border),
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        0 0 100px rgba(139, 92, 246, 0.1);
+    }
+    
+    .checkbox-group { 
+      display: flex; 
+      align-items: center; 
+      gap: 10px;
+      padding: 8px 0;
+    }
+    
+    .checkbox-group input[type="checkbox"] { 
+      width: 20px; 
+      height: 20px; 
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    
+    .checkbox-group label { 
+      margin: 0;
+      cursor: pointer;
+      color: var(--text);
+    }
+    
+    .hint { 
+      font-size: 11px; 
+      color: var(--text-muted); 
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    
+    #imagePreview {
+      width: 100%;
+      height: 100px;
+      background: var(--bg-input);
+      border-radius: 8px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    
+    #imagePreview img { 
+      max-width: 100%; 
+      max-height: 100%; 
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    
+    #imagePreview span { 
+      color: var(--text-muted); 
+      font-size: 12px;
+    }
+    
+    .preset-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    
+    .preset-btn { 
+      padding: 10px 8px; 
+      font-size: 12px; 
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      box-shadow: none;
+      font-weight: 500;
+    }
+    
+    .preset-btn:hover { 
+      background: var(--bg-card);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    #webcamBtn {
+      background: var(--bg-input) !important;
+      border: 1px solid var(--border);
+      box-shadow: none;
+      color: var(--text-dim);
+    }
+    
+    #webcamBtn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Action buttons */
+    #resetBtn {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+    
+    #saveBtn {
+      background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+    }
+    
+    /* Responsive */
+    @media (max-width: 900px) {
+      body { flex-direction: column; }
+      #controls { 
+        width: 100%; 
+        max-height: 50vh; 
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div class="logo">
+      <div class="logo-icon">🌀</div>
+      <h1>Vectory WebGL</h1>
+    </div>
+    <h2>High Performance Particle System</h2>
+    
+    <div class="section">
+      <div class="section-title">Direction Map</div>
+      <div class="control-group">
+        <label>Image</label>
+        <input type="file" id="imageInput" accept="image/*">
+      </div>
+      <div id="imagePreview"><span>3D Flow (default)</span></div>
+      <p class="hint">RGB → XYZ direction</p>
+      <div class="preset-buttons">
+        <button class="preset-btn" id="presetNoise">🌊 Noise</button>
+        <button class="preset-btn" id="presetGradient">➡️ Gradient</button>
+        <button class="preset-btn" id="presetRadial">🎯 Radial</button>
+        <button class="preset-btn" id="preset3DFlow">🧊 3D Flow</button>
+      </div>
+      <button id="webcamBtn" style="margin-top: 8px; background: #0f3460;">📷 Use Webcam</button>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Mode</div>
+      <div class="control-group">
+        <select id="mode">
+          <option value="1">Particles (2D)</option>
+          <option value="2">Static Trails (2D)</option>
+          <option value="3">Moving Trails (2D)</option>
+          <option value="4" selected>🧊 Particles (3D)</option>
+          <option value="5">🧊 Trails (3D)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Quality</label>
+        <select id="quality">
+          <option value="1">Fast (Low)</option>
+          <option value="2" selected>Balanced (Medium)</option>
+          <option value="3">Quality (High)</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="section" id="section3D">
+      <div class="section-title">🧊 3D Settings</div>
+      <div class="control-group">
+        <label>3D Spawn Mode</label>
+        <select id="spawn3DMode">
+          <option value="1">Image Plane (flat)</option>
+          <option value="2" selected>Depth from Brightness</option>
+          <option value="3">Full Volume</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Direction Source</label>
+        <select id="dir3DSource">
+          <option value="1">Brightness → Angle (2D style)</option>
+          <option value="2" selected>RGB → XYZ (full 3D)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Depth Scale <span class="value-display" id="depthScaleVal">100</span></label>
+        <input type="range" id="depthScale" min="10" max="300" value="100">
+      </div>
+      <div class="control-group">
+        <label>Image Attraction <span class="value-display" id="imgAttrVal">0</span></label>
+        <input type="range" id="imgAttr" min="0" max="100" value="0">
+        <p class="hint">Pull particles back to image position</p>
+      </div>
+      <div class="control-group">
+        <label>Camera Distance <span class="value-display" id="camDistVal">400</span></label>
+        <input type="range" id="camDist" min="100" max="1000" value="400">
+      </div>
+      <div class="control-group">
+        <label>Field of View <span class="value-display" id="fovVal">60°</span></label>
+        <input type="range" id="fov" min="30" max="120" value="60">
+      </div>
+      <p class="hint">🖱️ Drag to rotate, scroll to zoom</p>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Spawn</div>
+      <div class="control-group">
+        <label>Seed <span class="value-display" id="seedVal">1</span></label>
+        <input type="range" id="seed" min="1" max="9999" value="1">
+      </div>
+      <div class="control-group">
+        <label>Spawn Type</label>
+        <select id="spawnType">
+          <option value="1" selected>Random</option>
+          <option value="2">On Brightness</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Particles per frame <span class="value-display" id="countVal">50</span></label>
+        <input type="range" id="count" min="1" max="2000" value="50">
+      </div>
+      <div class="control-group">
+        <label>Brightness Cutoff <span class="value-display" id="cutoffVal">30%</span></label>
+        <input type="range" id="cutoff" min="0" max="99" value="30">
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Particle</div>
+      <div class="control-group">
+        <label>Lifetime (frames) <span class="value-display" id="lifetimeVal">100</span></label>
+        <input type="range" id="lifetime" min="10" max="500" value="100">
+      </div>
+      <div class="control-group">
+        <label>Size <span class="value-display" id="sizeVal">3</span></label>
+        <input type="range" id="size" min="1" max="30" value="3">
+      </div>
+      <div class="control-group">
+        <label>Speed <span class="value-display" id="speedVal">2</span></label>
+        <input type="range" id="speed" min="0.5" max="20" value="2" step="0.5">
+      </div>
+    </div>
+    
+    <div class="section" id="section2DDirection" style="display: none;">
+      <div class="section-title">Direction (2D)</div>
+      <div class="control-group">
+        <label>Channel</label>
+        <select id="channel">
+          <option value="1" selected>Brightness</option>
+          <option value="2">Red</option>
+          <option value="3">Green</option>
+          <option value="4">Blue</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Direction Shift <span class="value-display" id="shiftVal">0°</span></label>
+        <input type="range" id="shift" min="0" max="360" value="0">
+      </div>
+      <div class="control-group">
+        <label>Direction Fluctuation <span class="value-display" id="fluctVal">0°</span></label>
+        <input type="range" id="fluct" min="0" max="180" value="0">
+        <p class="hint">Per-particle random offset</p>
+      </div>
+      <div class="control-group">
+        <label>Dynamic Dir. Fluctuation <span class="value-display" id="dynFluctVal">0°</span></label>
+        <input type="range" id="dynFluct" min="0" max="180" value="0">
+        <p class="hint">Per-step random (curvy lines)</p>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Forces</div>
+      <div class="control-group">
+        <label>Attraction Force <span class="value-display" id="attrForceVal">0</span></label>
+        <input type="range" id="attrForce" min="-10" max="10" value="0" step="0.5">
+      </div>
+      <div class="control-group">
+        <label>Attraction Angle <span class="value-display" id="attrAngleVal">0°</span></label>
+        <input type="range" id="attrAngle" min="0" max="360" value="0">
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Color</div>
+      <div class="control-group">
+        <label>Color Mode</label>
+        <select id="colorMode">
+          <option value="1" selected>Keep Original</option>
+          <option value="2">Sample from Direction Map</option>
+          <option value="3">Custom Color</option>
+          <option value="4">Gradient (Lifetime)</option>
+          <option value="5">Depth Gradient (3D)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Custom Color</label>
+        <input type="color" id="customColor" value="#ffffff">
+      </div>
+      <div class="control-group">
+        <label>Start Color / Near</label>
+        <input type="color" id="startColor" value="#ffffff">
+      </div>
+      <div class="control-group">
+        <label>End Color / Far</label>
+        <input type="color" id="endColor" value="#e94560">
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Background</div>
+      <div class="control-group checkbox-group">
+        <input type="checkbox" id="transparentBg">
+        <label for="transparentBg">Transparent Background</label>
+      </div>
+      <div class="control-group">
+        <label>Background Color</label>
+        <input type="color" id="bgColor" value="#0f0f1a">
+      </div>
+      <div class="control-group">
+        <label>Trail Fade <span class="value-display" id="fadeVal">3</span></label>
+        <input type="range" id="fade" min="0" max="50" value="3">
+      </div>
+    </div>
+    
+    <button id="resetBtn">🔄 Reset Particles</button>
+    <button id="saveBtn">💾 Save Image</button>
+  </div>
+  
+  <div id="canvas-container">
+    <div id="statsBar">
+      <span>FPS: <span id="fpsDisplay">--</span></span>
+      <span>Particles: <span id="particleCount">0</span></span>
+    </div>
+    <div id="canvas-wrapper">
+      <canvas id="glCanvas"></canvas>
+    </div>
+  </div>
+
+<script>
+// ========== Vectory WebGL - High Performance Implementation ==========
+
+// ========== Settings ==========
+const settings = {
+  mode: 4,
+  quality: 2,
+  seed: 1,
+  spawnType: 1,
+  count: 50,
+  cutoff: 30,
+  lifetime: 100,
+  size: 3,
+  speed: 2,
+  // 2D Direction
+  channel: 1,
+  shift: 0,
+  fluct: 0,
+  dynFluct: 0,
+  // Forces
+  attrForce: 0,
+  attrAngle: 0,
+  // Color
+  colorMode: 1,
+  customColor: '#ffffff',
+  startColor: '#ffffff',
+  endColor: '#e94560',
+  // Background
+  transparentBg: false,
+  bgColor: '#0f0f1a',
+  fade: 3,
+  // 3D settings
+  camDist: 400,
+  fov: 60,
+  depthScale: 100,
+  spawn3DMode: 2,
+  dir3DSource: 2,
+  imgAttr: 0
+};
+
+// ========== WebGL State ==========
+let gl;
+let canvas;
+let canvasSize = 700;
+let program;
+let trailProgram;
+
+// Buffers
+let positionBuffer;
+let colorBuffer;
+let sizeBuffer;
+
+// Uniforms
+let uProjection;
+let uView;
+let uResolution;
+let uIs3D;
+
+// Particle data (typed arrays for performance)
+const MAX_PARTICLES = 200000;
+let particleCount = 0;
+let positions = new Float32Array(MAX_PARTICLES * 3);
+let colors = new Float32Array(MAX_PARTICLES * 4);
+let sizes = new Float32Array(MAX_PARTICLES);
+let velocities = new Float32Array(MAX_PARTICLES * 3);
+let lifetimes = new Float32Array(MAX_PARTICLES);
+let maxLifetimes = new Float32Array(MAX_PARTICLES);
+let origPositions = new Float32Array(MAX_PARTICLES * 3);
+let particleFluct = new Float32Array(MAX_PARTICLES);  // Per-particle direction fluctuation
+let particleIds = new Uint32Array(MAX_PARTICLES);     // Unique IDs for hash-based randomness
+let particleIdCounter = 0;
+
+// Trail data for mode 5
+let trailPositions = new Float32Array(MAX_PARTICLES * 50 * 3); // 50 trail points per particle
+let trailColors = new Float32Array(MAX_PARTICLES * 50 * 4);
+let trailCounts = new Uint16Array(MAX_PARTICLES);
+const TRAIL_LENGTH = 30;
+let particleSpeeds = new Float32Array(MAX_PARTICLES);  // Per-particle speed (constant)
+
+// Source image data
+let sourceData = null;
+let sourceWidth = 0;
+let sourceHeight = 0;
+
+// Camera
+let camRotX = 0.3;
+let camRotY = 0;
+let isDragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+
+// Webcam
+let webcam = null;
+let useWebcam = false;
+
+// Stats
+let frameCount = 0;
+let lastTime = performance.now();
+let fps = 0;
+
+// ========== Hash Functions ==========
+function hash2(a, b) {
+  let x = (a * 374761393 + b * 668265263) | 0;
+  x = ((x >>> 16) ^ x) * 0x45d9f3b | 0;
+  x = ((x >>> 16) ^ x) * 0x45d9f3b | 0;
+  return (x >>> 16) ^ x;
+}
+
+function hashFloat2(a, b) {
+  return (hash2(a, b) >>> 0) / 4294967296;
+}
+
+function hashRange(a, b, min, max) {
+  return min + hashFloat2(a, b) * (max - min);
+}
+
+// Returns int in [-128, 128] for fluctuation
+function hashFluct(a, b) {
+  return (hash2(a, b) % 257) - 128;
+}
+
+// ========== Brightness Sampler for spawn on brightness ==========
+let brightnessSamples = [];
+let brightnessSamplerReady = false;
+let lastCutoffForSampler = -1;
+
+function buildBrightnessSampler() {
+  if (!sourceData) return;
+  
+  const cutoffThreshold = settings.cutoff * 2.55;  // 0-255
+  brightnessSamples = [];
+  
+  // Sample at lower resolution for performance
+  const step = Math.max(1, Math.floor(Math.min(sourceWidth, sourceHeight) / 128));
+  
+  for (let y = 0; y < sourceHeight; y += step) {
+    for (let x = 0; x < sourceWidth; x += step) {
+      const idx = (y * sourceWidth + x) * 4;
+      const brightness = 0.2126 * sourceData[idx] + 0.7152 * sourceData[idx + 1] + 0.0722 * sourceData[idx + 2];
+      if (brightness >= cutoffThreshold) {
+        // Store canvas coordinates
+        const canvasX = (x / sourceWidth) * canvasSize;
+        const canvasY = (y / sourceHeight) * canvasSize;
+        brightnessSamples.push({ x: canvasX, y: canvasY, brightness });
+      }
+    }
+  }
+  
+  brightnessSamplerReady = brightnessSamples.length > 0;
+  lastCutoffForSampler = settings.cutoff;
+}
+
+// ========== Shaders ==========
+const vertexShaderSource = `
+  attribute vec3 aPosition;
+  attribute vec4 aColor;
+  attribute float aSize;
+  
+  uniform mat4 uProjection;
+  uniform mat4 uView;
+  uniform vec2 uResolution;
+  uniform float uIs3D;
+  
+  varying vec4 vColor;
+  
+  void main() {
+    vec4 viewPos = uView * vec4(aPosition, 1.0);
+    gl_Position = uProjection * viewPos;
+    
+    if (uIs3D > 0.5) {
+      // 3D mode: Size attenuation based on depth
+      float dist = length(viewPos.xyz);
+      gl_PointSize = aSize * (uResolution.y / dist) * 0.5;
+      gl_PointSize = clamp(gl_PointSize, 1.0, 100.0);
+    } else {
+      // 2D mode: Fixed size, no attenuation
+      gl_PointSize = aSize;
+    }
+    
+    vColor = aColor;
+  }
+`;
+
+const fragmentShaderSource = `
+  precision mediump float;
+  varying vec4 vColor;
+  
+  void main() {
+    // Circular point
+    vec2 coord = gl_PointCoord - vec2(0.5);
+    float dist = length(coord);
+    if (dist > 0.5) discard;
+    
+    // Soft edge
+    float alpha = smoothstep(0.5, 0.3, dist) * vColor.a;
+    gl_FragColor = vec4(vColor.rgb, alpha);
+  }
+`;
+
+const lineVertexShaderSource = `
+  attribute vec3 aPosition;
+  attribute vec4 aColor;
+  
+  uniform mat4 uProjection;
+  uniform mat4 uView;
+  
+  varying vec4 vColor;
+  
+  void main() {
+    gl_Position = uProjection * uView * vec4(aPosition, 1.0);
+    vColor = aColor;
+  }
+`;
+
+const lineFragmentShaderSource = `
+  precision mediump float;
+  varying vec4 vColor;
+  
+  void main() {
+    gl_FragColor = vColor;
+  }
+`;
+
+// ========== Matrix Functions ==========
+function perspectiveMatrix(fov, aspect, near, far) {
+  const f = 1.0 / Math.tan(fov * Math.PI / 360);
+  const nf = 1 / (near - far);
+  return new Float32Array([
+    f / aspect, 0, 0, 0,
+    0, f, 0, 0,
+    0, 0, (far + near) * nf, -1,
+    0, 0, 2 * far * near * nf, 0
+  ]);
+}
+
+function orthoMatrix(left, right, bottom, top, near, far) {
+  return new Float32Array([
+    2 / (right - left), 0, 0, 0,
+    0, 2 / (top - bottom), 0, 0,
+    0, 0, -2 / (far - near), 0,
+    -(right + left) / (right - left), -(top + bottom) / (top - bottom), -(far + near) / (far - near), 1
+  ]);
+}
+
+function viewMatrix(rotX, rotY, dist) {
+  const cx = Math.cos(rotX), sx = Math.sin(rotX);
+  const cy = Math.cos(rotY), sy = Math.sin(rotY);
+  
+  // Rotation Y * Rotation X * Translation
+  return new Float32Array([
+    cy, sx * sy, -cx * sy, 0,
+    0, cx, sx, 0,
+    sy, -sx * cy, cx * cy, 0,
+    0, 0, -dist, 1
+  ]);
+}
+
+function identityMatrix() {
+  return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+}
+
+// ========== WebGL Initialization ==========
+function initWebGL() {
+  canvas = document.getElementById('glCanvas');
+  canvas.width = canvasSize;
+  canvas.height = canvasSize;
+  
+  gl = canvas.getContext('webgl', { 
+    alpha: false, 
+    antialias: true,
+    preserveDrawingBuffer: true 
+  });
+  
+  if (!gl) {
+    alert('WebGL not supported');
+    return false;
+  }
+  
+  // Compile shaders
+  program = createProgram(vertexShaderSource, fragmentShaderSource);
+  trailProgram = createProgram(lineVertexShaderSource, lineFragmentShaderSource);
+  
+  // Create buffers
+  positionBuffer = gl.createBuffer();
+  colorBuffer = gl.createBuffer();
+  sizeBuffer = gl.createBuffer();
+  
+  // Enable point sprites
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  
+  // Get uniform locations
+  gl.useProgram(program);
+  uProjection = gl.getUniformLocation(program, 'uProjection');
+  uView = gl.getUniformLocation(program, 'uView');
+  uResolution = gl.getUniformLocation(program, 'uResolution');
+  uIs3D = gl.getUniformLocation(program, 'uIs3D');
+  
+  return true;
+}
+
+function createShader(type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    return null;
+  }
+  return shader;
+}
+
+function createProgram(vsSource, fsSource) {
+  const vs = createShader(gl.VERTEX_SHADER, vsSource);
+  const fs = createShader(gl.FRAGMENT_SHADER, fsSource);
+  
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    console.error('Program link error:', gl.getProgramInfoLog(prog));
+    return null;
+  }
+  return prog;
+}
+
+// ========== Source Image Handling ==========
+function getSourcePixel(x, y) {
+  if (!sourceData) return { r: 128, g: 128, b: 128 };
+  
+  const sx = Math.floor((x / canvasSize) * sourceWidth);
+  // Flip Y: WebGL Y=0 is bottom, image Y=0 is top
+  const sy = Math.floor(((canvasSize - y) / canvasSize) * sourceHeight);
+  const cx = Math.max(0, Math.min(sourceWidth - 1, sx));
+  const cy = Math.max(0, Math.min(sourceHeight - 1, sy));
+  
+  const idx = (cy * sourceWidth + cx) * 4;
+  return {
+    r: sourceData[idx],
+    g: sourceData[idx + 1],
+    b: sourceData[idx + 2]
+  };
+}
+
+function getBrightness(x, y) {
+  const p = getSourcePixel(x, y);
+  return 0.2126 * p.r + 0.7152 * p.g + 0.0722 * p.b;
+}
+
+// ========== Particle System ==========
+function spawnParticle(index) {
+  const seed = settings.seed;
+  const key = seed * 100000 + frameCount * 1000 + index;
+  const pId = particleIdCounter++;
+  
+  let spawnX, spawnY;
+  
+  // Spawn position based on spawnType
+  if (settings.spawnType === 2 && brightnessSamplerReady) {
+    // Spawn on brightness - pick from pre-sampled bright pixels
+    const sampleIdx = Math.floor(hashFloat2(key, 100) * brightnessSamples.length);
+    const sample = brightnessSamples[sampleIdx];
+    spawnX = sample.x;
+    spawnY = sample.y;
+  } else {
+    // Random spawn
+    spawnX = hashRange(key, 1, 0, canvasSize);
+    spawnY = hashRange(key, 2, 0, canvasSize);
+  }
+  
+  // Get brightness for depth calculation
+  const brightness = getBrightness(spawnX, spawnY);
+  
+  // Convert to centered coordinates
+  const x = spawnX - canvasSize / 2;
+  const y = spawnY - canvasSize / 2;
+  
+  // Z from brightness or random
+  let z = 0;
+  if (settings.mode >= 4) { // 3D modes
+    switch (settings.spawn3DMode) {
+      case 1: z = 0; break;
+      case 2: z = (brightness / 255 - 0.5) * settings.depthScale * 2; break;
+      case 3: z = hashRange(key, 3, -settings.depthScale, settings.depthScale); break;
+    }
+  }
+  
+  // Get color from source
+  const pixel = getSourcePixel(spawnX, spawnY);
+  
+  // Get channel value for 2D direction
+  let channelValue;
+  switch (settings.channel) {
+    case 1: channelValue = brightness; break;
+    case 2: channelValue = pixel.r; break;
+    case 3: channelValue = pixel.g; break;
+    case 4: channelValue = pixel.b; break;
+    default: channelValue = brightness;
+  }
+  
+  // Per-particle fluctuation
+  const normalizedFluct = Math.round(settings.fluct * 0.708);
+  const lineFluct = normalizedFluct > 0 ? Math.floor(hashFluct(pId, 2) * normalizedFluct / 128) : 0;
+  
+  // Speed variation
+  const speed = settings.speed * (0.5 + hashFloat2(key, 4) * 0.5);
+  
+  // Initial velocity
+  let vx, vy, vz;
+  if (settings.dir3DSource === 2 && settings.mode >= 4) {
+    // RGB → XYZ (full 3D)
+    vx = (pixel.r / 127.5 - 1) * speed;
+    vy = (pixel.g / 127.5 - 1) * speed;
+    vz = (pixel.b / 127.5 - 1) * speed;
+  } else {
+    // Brightness → Angle (2D style)
+    const baseAngle = (channelValue / 255) * Math.PI * 2;
+    const shiftRad = settings.shift * Math.PI / 180;
+    const fluctRad = lineFluct * Math.PI / 180;
+    const angle = baseAngle + shiftRad + fluctRad;
+    vx = Math.cos(angle) * speed;
+    vy = Math.sin(angle) * speed;
+    vz = 0;
+  }
+  
+  // Store particle data
+  const i3 = particleCount * 3;
+  const i4 = particleCount * 4;
+  
+  positions[i3] = x;
+  positions[i3 + 1] = y;
+  positions[i3 + 2] = z;
+  
+  origPositions[i3] = x;
+  origPositions[i3 + 1] = y;
+  origPositions[i3 + 2] = z;
+  
+  velocities[i3] = vx;
+  velocities[i3 + 1] = vy;
+  velocities[i3 + 2] = vz;
+  
+  // Store per-particle data
+  particleFluct[particleCount] = lineFluct;
+  particleIds[particleCount] = pId;
+  particleSpeeds[particleCount] = speed;
+  
+  // Color
+  if (settings.colorMode === 1) {
+    colors[i4] = pixel.r / 255;
+    colors[i4 + 1] = pixel.g / 255;
+    colors[i4 + 2] = pixel.b / 255;
+  } else if (settings.colorMode === 2) {
+    // Sample from direction map (current position)
+    colors[i4] = pixel.r / 255;
+    colors[i4 + 1] = pixel.g / 255;
+    colors[i4 + 2] = pixel.b / 255;
+  } else if (settings.colorMode === 3) {
+    const c = hexToRgb(settings.customColor);
+    colors[i4] = c.r / 255;
+    colors[i4 + 1] = c.g / 255;
+    colors[i4 + 2] = c.b / 255;
+  } else {
+    const c = hexToRgb(settings.startColor);
+    colors[i4] = c.r / 255;
+    colors[i4 + 1] = c.g / 255;
+    colors[i4 + 2] = c.b / 255;
+  }
+  colors[i4 + 3] = 1.0;
+  
+  sizes[particleCount] = settings.size;
+  lifetimes[particleCount] = settings.lifetime;
+  maxLifetimes[particleCount] = settings.lifetime;
+  trailCounts[particleCount] = 0;
+  
+  particleCount++;
+}
+
+function updateParticles() {
+  let writeIdx = 0;
+  
+  // Pre-compute attraction direction
+  const attrRad = settings.attrAngle * Math.PI / 180;
+  const attrCos = Math.cos(attrRad);
+  const attrSin = Math.sin(attrRad);
+  
+  // Pre-compute gradient colors (avoid hexToRgb in hot loop)
+  let gradientC1 = null, gradientC2 = null;
+  if (settings.colorMode === 4 || settings.colorMode === 5) {
+    gradientC1 = hexToRgb(settings.startColor);
+    gradientC2 = hexToRgb(settings.endColor);
+  }
+  
+  for (let i = 0; i < particleCount; i++) {
+    const i3 = i * 3;
+    const i4 = i * 4;
+    
+    // Update lifetime
+    lifetimes[i]--;
+    if (lifetimes[i] <= 0) continue;
+    
+    // Get current position for direction sampling
+    const canvasX = positions[i3] + canvasSize / 2;
+    const canvasY = positions[i3 + 1] + canvasSize / 2;
+    
+    const pId = particleIds[i];
+    const step = Math.floor(maxLifetimes[i] - lifetimes[i]);
+    
+    // Update velocity from source (continuous sampling)
+    const speed = particleSpeeds[i];
+    
+    if (settings.dir3DSource === 2 && settings.mode >= 4) {
+      // RGB → XYZ (full 3D)
+      const pixel = getSourcePixel(canvasX, canvasY);
+      
+      velocities[i3] = (pixel.r / 127.5 - 1) * speed;
+      velocities[i3 + 1] = (pixel.g / 127.5 - 1) * speed;
+      velocities[i3 + 2] = (pixel.b / 127.5 - 1) * speed;
+    } else {
+      // 2D style direction (for 2D modes OR 3D with dir3DSource=1)
+      const pixel = getSourcePixel(canvasX, canvasY);
+      const brightness = 0.2126 * pixel.r + 0.7152 * pixel.g + 0.0722 * pixel.b;
+      
+      let channelValue;
+      switch (settings.channel) {
+        case 1: channelValue = brightness; break;
+        case 2: channelValue = pixel.r; break;
+        case 3: channelValue = pixel.g; break;
+        case 4: channelValue = pixel.b; break;
+        default: channelValue = brightness;
+      }
+      
+      // Dynamic fluctuation (per-step random)
+      let dynFluctVal = 0;
+      if (settings.dynFluct > 0) {
+        const normalizedDynFluct = Math.round(settings.dynFluct * 0.708);
+        dynFluctVal = Math.floor(hashFluct(pId * 10000 + step, 3) * normalizedDynFluct / 128);
+      }
+      
+      const baseAngle = (channelValue / 255) * Math.PI * 2;
+      const shiftRad = settings.shift * Math.PI / 180;
+      const fluctRad = particleFluct[i] * Math.PI / 180;
+      const dynFluctRad = dynFluctVal * Math.PI / 180;
+      const angle = baseAngle + shiftRad + fluctRad + dynFluctRad;
+      
+      velocities[i3] = Math.cos(angle) * speed;
+      velocities[i3 + 1] = Math.sin(angle) * speed;
+      // Keep Z velocity unchanged for 3D mode with 2D-style direction
+    }
+    
+    // Apply attraction force
+    if (settings.attrForce !== 0) {
+      velocities[i3] += attrCos * settings.attrForce * 0.1;
+      velocities[i3 + 1] += attrSin * settings.attrForce * 0.1;
+    }
+    
+    // Apply image attraction (3D only)
+    if (settings.imgAttr > 0 && settings.mode >= 4) {
+      const strength = settings.imgAttr * 0.001;
+      velocities[i3] += (origPositions[i3] - positions[i3]) * strength;
+      velocities[i3 + 1] += (origPositions[i3 + 1] - positions[i3 + 1]) * strength;
+      velocities[i3 + 2] += (origPositions[i3 + 2] - positions[i3 + 2]) * strength;
+    }
+    
+    // Store trail point (before moving)
+    if (settings.mode === 5 || settings.mode === 3) {
+      const trailBase = i * TRAIL_LENGTH;
+      
+      // If trail is full, shift all points (remove oldest)
+      if (trailCounts[i] >= TRAIL_LENGTH) {
+        for (let t = 0; t < TRAIL_LENGTH - 1; t++) {
+          const srcIdx = trailBase + t + 1;
+          const dstIdx = trailBase + t;
+          trailPositions[dstIdx * 3] = trailPositions[srcIdx * 3];
+          trailPositions[dstIdx * 3 + 1] = trailPositions[srcIdx * 3 + 1];
+          trailPositions[dstIdx * 3 + 2] = trailPositions[srcIdx * 3 + 2];
+          trailColors[dstIdx * 4] = trailColors[srcIdx * 4];
+          trailColors[dstIdx * 4 + 1] = trailColors[srcIdx * 4 + 1];
+          trailColors[dstIdx * 4 + 2] = trailColors[srcIdx * 4 + 2];
+          trailColors[dstIdx * 4 + 3] = trailColors[srcIdx * 4 + 3];
+        }
+        trailCounts[i] = TRAIL_LENGTH - 1;
+      }
+      
+      // Add new point at the end
+      const trailIdx = trailBase + trailCounts[i];
+      trailPositions[trailIdx * 3] = positions[i3];
+      trailPositions[trailIdx * 3 + 1] = positions[i3 + 1];
+      trailPositions[trailIdx * 3 + 2] = positions[i3 + 2];
+      
+      trailColors[trailIdx * 4] = colors[i4];
+      trailColors[trailIdx * 4 + 1] = colors[i4 + 1];
+      trailColors[trailIdx * 4 + 2] = colors[i4 + 2];
+      trailColors[trailIdx * 4 + 3] = 1.0;
+      
+      trailCounts[i]++;
+      
+      // Update alpha gradient for all trail points (oldest = most transparent)
+      for (let t = 0; t < trailCounts[i]; t++) {
+        const idx = trailBase + t;
+        const alpha = (t + 1) / trailCounts[i];
+        trailColors[idx * 4 + 3] = alpha * 0.8;
+      }
+    }
+    
+    // Update position
+    positions[i3] += velocities[i3];
+    positions[i3 + 1] += velocities[i3 + 1];
+    positions[i3 + 2] += velocities[i3 + 2];
+    
+    // Bounds check (matching original p5.js version)
+    const halfSize = canvasSize / 2 * 1.5;
+    const maxDepth = settings.depthScale * 2;
+    if (Math.abs(positions[i3]) > halfSize || 
+        Math.abs(positions[i3 + 1]) > halfSize ||
+        Math.abs(positions[i3 + 2]) > maxDepth) {
+      continue;
+    }
+    
+    // Update alpha based on lifetime
+    const lifeRatio = lifetimes[i] / maxLifetimes[i];
+    colors[i4 + 3] = lifeRatio;
+    
+    // Update color for dynamic color modes
+    if (settings.colorMode === 2) {
+      // Sample from direction map (current position)
+      const pixel = getSourcePixel(canvasX, canvasY);
+      colors[i4] = pixel.r / 255;
+      colors[i4 + 1] = pixel.g / 255;
+      colors[i4 + 2] = pixel.b / 255;
+    } else if (settings.colorMode === 4) {
+      const t = 1 - lifeRatio;
+      colors[i4] = (gradientC1.r + (gradientC2.r - gradientC1.r) * t) / 255;
+      colors[i4 + 1] = (gradientC1.g + (gradientC2.g - gradientC1.g) * t) / 255;
+      colors[i4 + 2] = (gradientC1.b + (gradientC2.b - gradientC1.b) * t) / 255;
+    } else if (settings.colorMode === 5) {
+      const zNorm = (positions[i3 + 2] + settings.depthScale) / (settings.depthScale * 2);
+      const t = Math.max(0, Math.min(1, zNorm));
+      colors[i4] = (gradientC1.r + (gradientC2.r - gradientC1.r) * t) / 255;
+      colors[i4 + 1] = (gradientC1.g + (gradientC2.g - gradientC1.g) * t) / 255;
+      colors[i4 + 2] = (gradientC1.b + (gradientC2.b - gradientC1.b) * t) / 255;
+    }
+    
+    // Compact alive particles
+    if (writeIdx !== i) {
+      const w3 = writeIdx * 3;
+      const w4 = writeIdx * 4;
+      
+      positions[w3] = positions[i3];
+      positions[w3 + 1] = positions[i3 + 1];
+      positions[w3 + 2] = positions[i3 + 2];
+      
+      origPositions[w3] = origPositions[i3];
+      origPositions[w3 + 1] = origPositions[i3 + 1];
+      origPositions[w3 + 2] = origPositions[i3 + 2];
+      
+      velocities[w3] = velocities[i3];
+      velocities[w3 + 1] = velocities[i3 + 1];
+      velocities[w3 + 2] = velocities[i3 + 2];
+      
+      colors[w4] = colors[i4];
+      colors[w4 + 1] = colors[i4 + 1];
+      colors[w4 + 2] = colors[i4 + 2];
+      colors[w4 + 3] = colors[i4 + 3];
+      
+      sizes[writeIdx] = sizes[i];
+      lifetimes[writeIdx] = lifetimes[i];
+      maxLifetimes[writeIdx] = maxLifetimes[i];
+      particleFluct[writeIdx] = particleFluct[i];
+      particleIds[writeIdx] = particleIds[i];
+      particleSpeeds[writeIdx] = particleSpeeds[i];
+      
+      // Copy trail data
+      const srcTrailBase = i * TRAIL_LENGTH;
+      const dstTrailBase = writeIdx * TRAIL_LENGTH;
+      for (let t = 0; t < trailCounts[i]; t++) {
+        const srcIdx = srcTrailBase + t;
+        const dstIdx = dstTrailBase + t;
+        trailPositions[dstIdx * 3] = trailPositions[srcIdx * 3];
+        trailPositions[dstIdx * 3 + 1] = trailPositions[srcIdx * 3 + 1];
+        trailPositions[dstIdx * 3 + 2] = trailPositions[srcIdx * 3 + 2];
+        trailColors[dstIdx * 4] = trailColors[srcIdx * 4];
+        trailColors[dstIdx * 4 + 1] = trailColors[srcIdx * 4 + 1];
+        trailColors[dstIdx * 4 + 2] = trailColors[srcIdx * 4 + 2];
+        trailColors[dstIdx * 4 + 3] = trailColors[srcIdx * 4 + 3];
+      }
+      trailCounts[writeIdx] = trailCounts[i];
+    }
+    writeIdx++;
+  }
+  
+  particleCount = writeIdx;
+}
+
+// ========== Rendering ==========
+function render() {
+  const bg = hexToRgb(settings.bgColor);
+  
+  // Fade effect for trails (mode 3 and 5)
+  if ((settings.mode === 3 || settings.mode === 5) && settings.fade > 0) {
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    
+    // Draw fade quad
+    if (settings.transparentBg) {
+      gl.clearColor(0, 0, 0, 0);
+    } else {
+      gl.clearColor(bg.r / 255, bg.g / 255, bg.b / 255, settings.fade / 255);
+    }
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  } else {
+    if (settings.transparentBg) {
+      gl.clearColor(0, 0, 0, 0);
+    } else {
+      gl.clearColor(bg.r / 255, bg.g / 255, bg.b / 255, 1.0);
+    }
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  }
+  
+  if (particleCount === 0) return;
+  
+  gl.useProgram(program);
+  
+  // Set matrices
+  let proj, view;
+  if (settings.mode >= 4) {
+    // 3D perspective
+    proj = perspectiveMatrix(settings.fov, 1, 1, 5000);
+    view = viewMatrix(camRotX, camRotY, settings.camDist);
+  } else {
+    // 2D orthographic
+    const s = canvasSize / 2;
+    proj = orthoMatrix(-s, s, -s, s, -1000, 1000);
+    view = identityMatrix();
+  }
+  
+  gl.uniformMatrix4fv(uProjection, false, proj);
+  gl.uniformMatrix4fv(uView, false, view);
+  gl.uniform2f(uResolution, canvasSize, canvasSize);
+  gl.uniform1f(uIs3D, settings.mode >= 4 ? 1.0 : 0.0);
+  
+  // Upload position data
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, positions.subarray(0, particleCount * 3), gl.DYNAMIC_DRAW);
+  const aPosition = gl.getAttribLocation(program, 'aPosition');
+  gl.enableVertexAttribArray(aPosition);
+  gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+  
+  // Upload color data
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, colors.subarray(0, particleCount * 4), gl.DYNAMIC_DRAW);
+  const aColor = gl.getAttribLocation(program, 'aColor');
+  gl.enableVertexAttribArray(aColor);
+  gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+  
+  // Upload size data
+  gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, sizes.subarray(0, particleCount), gl.DYNAMIC_DRAW);
+  const aSize = gl.getAttribLocation(program, 'aSize');
+  gl.enableVertexAttribArray(aSize);
+  gl.vertexAttribPointer(aSize, 1, gl.FLOAT, false, 0, 0);
+  
+  // Draw all particles in ONE call
+  gl.drawArrays(gl.POINTS, 0, particleCount);
+  
+  // Draw trails for mode 3 (Moving Trails 2D) and mode 5 (3D Trails)
+  if (settings.mode === 3 || settings.mode === 5) {
+    renderTrails3D(proj, view);
+  }
+}
+
+// ========== 3D Trails Rendering ==========
+function renderTrails3D(proj, view) {
+  if (particleCount === 0) return;
+  
+  // Use main program (with perspective size attenuation)
+  gl.useProgram(program);
+  
+  gl.uniformMatrix4fv(uProjection, false, proj);
+  gl.uniformMatrix4fv(uView, false, view);
+  gl.uniform2f(uResolution, canvasSize, canvasSize);
+  gl.uniform1f(uIs3D, settings.mode >= 4 ? 1.0 : 0.0);
+  
+  // Count total trail points
+  let totalPoints = 0;
+  for (let i = 0; i < particleCount; i++) {
+    totalPoints += trailCounts[i];
+  }
+  
+  if (totalPoints === 0) return;
+  
+  const trailPos = new Float32Array(totalPoints * 3);
+  const trailCol = new Float32Array(totalPoints * 4);
+  const trailSiz = new Float32Array(totalPoints);
+  
+  let vertIdx = 0;
+  
+  // Collect all trail points
+  for (let i = 0; i < particleCount; i++) {
+    const count = trailCounts[i];
+    if (count === 0) continue;
+    
+    const baseIdx = i * TRAIL_LENGTH;
+    
+    for (let j = 0; j < count; j++) {
+      const idx = baseIdx + j;
+      
+      trailPos[vertIdx * 3] = trailPositions[idx * 3];
+      trailPos[vertIdx * 3 + 1] = trailPositions[idx * 3 + 1];
+      trailPos[vertIdx * 3 + 2] = trailPositions[idx * 3 + 2];
+      
+      trailCol[vertIdx * 4] = trailColors[idx * 4];
+      trailCol[vertIdx * 4 + 1] = trailColors[idx * 4 + 1];
+      trailCol[vertIdx * 4 + 2] = trailColors[idx * 4 + 2];
+      trailCol[vertIdx * 4 + 3] = trailColors[idx * 4 + 3];
+      
+      // Trail points slightly smaller than main particle
+      trailSiz[vertIdx] = settings.size * 0.7;
+      
+      vertIdx++;
+    }
+  }
+  
+  // Upload and draw as points
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, trailPos.subarray(0, vertIdx * 3), gl.DYNAMIC_DRAW);
+  const aPosition = gl.getAttribLocation(program, 'aPosition');
+  gl.enableVertexAttribArray(aPosition);
+  gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, trailCol.subarray(0, vertIdx * 4), gl.DYNAMIC_DRAW);
+  const aColor = gl.getAttribLocation(program, 'aColor');
+  gl.enableVertexAttribArray(aColor);
+  gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, trailSiz.subarray(0, vertIdx), gl.DYNAMIC_DRAW);
+  const aSize = gl.getAttribLocation(program, 'aSize');
+  gl.enableVertexAttribArray(aSize);
+  gl.vertexAttribPointer(aSize, 1, gl.FLOAT, false, 0, 0);
+  
+  gl.drawArrays(gl.POINTS, 0, vertIdx);
+}
+
+// ========== Static Trails Mode ==========
+function renderStaticTrails() {
+  const bg = hexToRgb(settings.bgColor);
+  if (settings.transparentBg) {
+    gl.clearColor(0, 0, 0, 0);
+  } else {
+    gl.clearColor(bg.r / 255, bg.g / 255, bg.b / 255, 1.0);
+  }
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  
+  gl.useProgram(program);
+  
+  const s = canvasSize / 2;
+  const proj = orthoMatrix(-s, s, -s, s, -1000, 1000);
+  const view = identityMatrix();
+  
+  gl.uniformMatrix4fv(uProjection, false, proj);
+  gl.uniformMatrix4fv(uView, false, view);
+  gl.uniform2f(uResolution, canvasSize, canvasSize);
+  gl.uniform1f(uIs3D, 0.0);  // 2D mode - no size attenuation
+  
+  // Pre-compute attraction direction
+  const attrRad = settings.attrAngle * Math.PI / 180;
+  const attrCos = Math.cos(attrRad);
+  const attrSin = Math.sin(attrRad);
+  
+  // Pre-compute colors (avoid hexToRgb in hot loop)
+  const gradientC1 = hexToRgb(settings.startColor);
+  const gradientC2 = hexToRgb(settings.endColor);
+  const customC = hexToRgb(settings.customColor);
+  
+  // Generate all trail points
+  const maxSteps = Math.floor(settings.lifetime * settings.speed);
+  const totalPoints = settings.count * maxSteps;
+  
+  const trailPos = new Float32Array(totalPoints * 3);
+  const trailCol = new Float32Array(totalPoints * 4);
+  const trailSiz = new Float32Array(totalPoints);
+  
+  let pointIdx = 0;
+  
+  for (let i = 0; i < settings.count; i++) {
+    const key = settings.seed * 10000 + i;
+    
+    let spawnX, spawnY;
+    
+    // Spawn position based on spawnType
+    if (settings.spawnType === 2 && brightnessSamplerReady) {
+      const sampleIdx = Math.floor(hashFloat2(key, 100) * brightnessSamples.length);
+      const sample = brightnessSamples[sampleIdx];
+      spawnX = sample.x;
+      spawnY = sample.y;
+    } else {
+      spawnX = hashRange(key, 1, 0, canvasSize);
+      spawnY = hashRange(key, 2, 0, canvasSize);
+    }
+    
+    let x = spawnX - canvasSize / 2;
+    let y = spawnY - canvasSize / 2;
+    
+    const startPixel = getSourcePixel(spawnX, spawnY);
+    const speed = settings.speed * (0.5 + hashFloat2(key, 3) * 0.5);
+    
+    // Per-particle direction fluctuation
+    const normalizedFluct = Math.round(settings.fluct * 0.708);
+    const lineFluct = normalizedFluct > 0 ? Math.floor(hashFluct(key, 2) * normalizedFluct / 128) : 0;
+    const fluctRad = lineFluct * Math.PI / 180;
+    const shiftRad = settings.shift * Math.PI / 180;
+    
+    // Velocity for attraction
+    let vx = 0, vy = 0;
+    
+    for (let step = 0; step < maxSteps; step++) {
+      const canvasX = x + canvasSize / 2;
+      const canvasY = y + canvasSize / 2;
+      
+      if (canvasX < 0 || canvasX >= canvasSize || canvasY < 0 || canvasY >= canvasSize) break;
+      
+      const pixel = getSourcePixel(canvasX, canvasY);
+      const brightness = 0.2126 * pixel.r + 0.7152 * pixel.g + 0.0722 * pixel.b;
+      
+      // Get channel value
+      let channelValue;
+      switch (settings.channel) {
+        case 1: channelValue = brightness; break;
+        case 2: channelValue = pixel.r; break;
+        case 3: channelValue = pixel.g; break;
+        case 4: channelValue = pixel.b; break;
+        default: channelValue = brightness;
+      }
+      
+      // Dynamic fluctuation (per-step random)
+      let dynFluctVal = 0;
+      if (settings.dynFluct > 0) {
+        const normalizedDynFluct = Math.round(settings.dynFluct * 0.708);
+        dynFluctVal = Math.floor(hashFluct(key * 10000 + step, 3) * normalizedDynFluct / 128);
+      }
+      const dynFluctRad = dynFluctVal * Math.PI / 180;
+      
+      const baseAngle = (channelValue / 255) * Math.PI * 2;
+      const angle = baseAngle + shiftRad + fluctRad + dynFluctRad;
+      
+      // Store point
+      trailPos[pointIdx * 3] = x;
+      trailPos[pointIdx * 3 + 1] = y;
+      trailPos[pointIdx * 3 + 2] = 0;
+      
+      const t = step / maxSteps;
+      if (settings.colorMode === 1) {
+        trailCol[pointIdx * 4] = startPixel.r / 255;
+        trailCol[pointIdx * 4 + 1] = startPixel.g / 255;
+        trailCol[pointIdx * 4 + 2] = startPixel.b / 255;
+      } else if (settings.colorMode === 2) {
+        // Sample from current position
+        trailCol[pointIdx * 4] = pixel.r / 255;
+        trailCol[pointIdx * 4 + 1] = pixel.g / 255;
+        trailCol[pointIdx * 4 + 2] = pixel.b / 255;
+      } else if (settings.colorMode === 4) {
+        trailCol[pointIdx * 4] = (gradientC1.r + (gradientC2.r - gradientC1.r) * t) / 255;
+        trailCol[pointIdx * 4 + 1] = (gradientC1.g + (gradientC2.g - gradientC1.g) * t) / 255;
+        trailCol[pointIdx * 4 + 2] = (gradientC1.b + (gradientC2.b - gradientC1.b) * t) / 255;
+      } else {
+        trailCol[pointIdx * 4] = customC.r / 255;
+        trailCol[pointIdx * 4 + 1] = customC.g / 255;
+        trailCol[pointIdx * 4 + 2] = customC.b / 255;
+      }
+      trailCol[pointIdx * 4 + 3] = 1 - t;
+      
+      trailSiz[pointIdx] = settings.size;
+      pointIdx++;
+      
+      // Calculate velocity
+      vx = Math.cos(angle) * speed;
+      vy = Math.sin(angle) * speed;
+      
+      // Apply attraction force
+      if (settings.attrForce !== 0) {
+        vx += attrCos * settings.attrForce * 0.1;
+        vy += attrSin * settings.attrForce * 0.1;
+      }
+      
+      x += vx;
+      y += vy;
+    }
+  }
+  
+  // Upload and draw
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, trailPos.subarray(0, pointIdx * 3), gl.DYNAMIC_DRAW);
+  const aPosition = gl.getAttribLocation(program, 'aPosition');
+  gl.enableVertexAttribArray(aPosition);
+  gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, trailCol.subarray(0, pointIdx * 4), gl.DYNAMIC_DRAW);
+  const aColor = gl.getAttribLocation(program, 'aColor');
+  gl.enableVertexAttribArray(aColor);
+  gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, trailSiz.subarray(0, pointIdx), gl.DYNAMIC_DRAW);
+  const aSize = gl.getAttribLocation(program, 'aSize');
+  gl.enableVertexAttribArray(aSize);
+  gl.vertexAttribPointer(aSize, 1, gl.FLOAT, false, 0, 0);
+  
+  gl.drawArrays(gl.POINTS, 0, pointIdx);
+}
+
+// ========== Main Loop ==========
+function mainLoop() {
+  frameCount++;
+  
+  // Update FPS
+  const now = performance.now();
+  if (now - lastTime >= 500) {
+    fps = Math.round(frameCount / ((now - lastTime) / 1000));
+    document.getElementById('fpsDisplay').textContent = fps;
+    document.getElementById('particleCount').textContent = particleCount;
+    frameCount = 0;
+    lastTime = now;
+  }
+  
+  // Update webcam
+  if (useWebcam) {
+    updateFromWebcam();
+  }
+  
+  if (settings.mode === 2) {
+    // Static trails - render once per frame
+    renderStaticTrails();
+  } else {
+    // Particle modes
+    // Spawn new particles
+    const spawnCount = Math.min(settings.count, MAX_PARTICLES - particleCount);
+    for (let i = 0; i < spawnCount; i++) {
+      spawnParticle(i);
+    }
+    
+    // Update existing
+    updateParticles();
+    
+    // Render
+    render();
+  }
+  
+  requestAnimationFrame(mainLoop);
+}
+
+// ========== Helpers ==========
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 255, g: 255, b: 255 };
+}
+
+// ========== Direction Map Generation ==========
+
+// Simple hash for noise
+function noiseHash(x, y, seed) {
+  let n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+// Smoothed noise
+function smoothNoise(x, y, seed) {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  const fx = x - ix, fy = y - iy;
+  
+  const a = noiseHash(ix, iy, seed);
+  const b = noiseHash(ix + 1, iy, seed);
+  const c = noiseHash(ix, iy + 1, seed);
+  const d = noiseHash(ix + 1, iy + 1, seed);
+  
+  const ux = fx * fx * (3 - 2 * fx);
+  const uy = fy * fy * (3 - 2 * fy);
+  
+  return a * (1 - ux) * (1 - uy) + b * ux * (1 - uy) + c * (1 - ux) * uy + d * ux * uy;
+}
+
+// Fractal noise (multiple octaves)
+function fractalNoise(x, y, seed, octaves = 4) {
+  let val = 0, amp = 0.5, freq = 1, max = 0;
+  for (let i = 0; i < octaves; i++) {
+    val += smoothNoise(x * freq, y * freq, seed + i * 100) * amp;
+    max += amp;
+    amp *= 0.5;
+    freq *= 2;
+  }
+  return val / max;
+}
+
+function createNoiseMap() {
+  const size = 256;
+  const data = new Uint8Array(size * size * 4);
+  const scale = 0.02;
+  
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      // Different noise for each RGB channel = different 3D directions
+      data[idx] = Math.floor(fractalNoise(x * scale, y * scale, settings.seed) * 255);
+      data[idx + 1] = Math.floor(fractalNoise(x * scale, y * scale, settings.seed + 1000) * 255);
+      data[idx + 2] = Math.floor(fractalNoise(x * scale, y * scale, settings.seed + 2000) * 255);
+      data[idx + 3] = 255;
+    }
+  }
+  
+  sourceData = data;
+  sourceWidth = size;
+  sourceHeight = size;
+  updatePreview();
+}
+
+function createGradientMap() {
+  const size = 256;
+  const data = new Uint8Array(size * size * 4);
+  
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      const val = Math.floor((x / size) * 255);
+      data[idx] = val;
+      data[idx + 1] = val;
+      data[idx + 2] = val;
+      data[idx + 3] = 255;
+    }
+  }
+  
+  sourceData = data;
+  sourceWidth = size;
+  sourceHeight = size;
+  updatePreview();
+}
+
+function createRadialMap() {
+  const size = 256;
+  const data = new Uint8Array(size * size * 4);
+  const cx = size / 2, cy = size / 2;
+  
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      
+      // Direction from center outward
+      const dx = x - cx;
+      const dy = y - cy;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      
+      // Normalize and map to 0-255 (128 = zero velocity)
+      // R = X direction, G = Y direction, B = Z (slight outward push)
+      data[idx] = Math.floor((dx / len * 0.5 + 0.5) * 255);      // X: outward
+      data[idx + 1] = Math.floor((dy / len * 0.5 + 0.5) * 255);  // Y: outward
+      data[idx + 2] = Math.floor(0.6 * 255);                      // Z: slight forward
+      data[idx + 3] = 255;
+    }
+  }
+  
+  sourceData = data;
+  sourceWidth = size;
+  sourceHeight = size;
+  updatePreview();
+}
+
+function create3DFlowMap() {
+  const size = 256;
+  const data = new Uint8Array(size * size * 4);
+  const cx = size / 2, cy = size / 2;
+  
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      
+      const dx = x - cx;
+      const dy = y - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy) / (size * 0.5);
+      const angle = Math.atan2(dy, dx);
+      
+      // Spiral flow: tangential + slight inward/outward based on noise
+      const tangentX = -Math.sin(angle);
+      const tangentY = Math.cos(angle);
+      
+      // Add some turbulence
+      const turbulence = fractalNoise(x * 0.02, y * 0.02, settings.seed, 3);
+      const zFlow = Math.sin(dist * 4 + settings.seed * 0.1) * 0.5;
+      
+      // Mix spiral with turbulence
+      const vx = tangentX * 0.7 + (turbulence - 0.5) * 0.6;
+      const vy = tangentY * 0.7 + (turbulence - 0.5) * 0.6;
+      const vz = zFlow;
+      
+      data[idx] = Math.floor((vx * 0.5 + 0.5) * 255);
+      data[idx + 1] = Math.floor((vy * 0.5 + 0.5) * 255);
+      data[idx + 2] = Math.floor((vz * 0.5 + 0.5) * 255);
+      data[idx + 3] = 255;
+    }
+  }
+  
+  sourceData = data;
+  sourceWidth = size;
+  sourceHeight = size;
+  updatePreview();
+}
+
+function updatePreview() {
+  if (!sourceData) return;
+  
+  const container = document.getElementById('imagePreview');
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = sourceWidth;
+  tempCanvas.height = sourceHeight;
+  const ctx = tempCanvas.getContext('2d');
+  
+  const imgData = ctx.createImageData(sourceWidth, sourceHeight);
+  imgData.data.set(sourceData);
+  ctx.putImageData(imgData, 0, 0);
+  
+  container.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = tempCanvas.toDataURL();
+  container.appendChild(img);
+}
+
+// ========== Webcam ==========
+async function startWebcam() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { width: { ideal: 256 }, height: { ideal: 256 }, facingMode: 'user' },
+      audio: false 
+    });
+    
+    webcam = document.createElement('video');
+    webcam.srcObject = stream;
+    webcam.setAttribute('playsinline', '');
+    webcam.muted = true;
+    await webcam.play();
+    
+    useWebcam = true;
+    
+    const btn = document.getElementById('webcamBtn');
+    btn.textContent = '📷 Webcam ON';
+    btn.style.background = '#e94560';
+    
+    document.getElementById('imagePreview').innerHTML = '<span>📷 Live Webcam</span>';
+  } catch (err) {
+    console.error('Webcam error:', err);
+    alert('Could not access webcam: ' + err.message);
+  }
+}
+
+function stopWebcam() {
+  if (webcam) {
+    const stream = webcam.srcObject;
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    webcam.srcObject = null;
+    webcam = null;
+  }
+  useWebcam = false;
+  
+  const btn = document.getElementById('webcamBtn');
+  if (btn) {
+    btn.textContent = '📷 Use Webcam';
+    btn.style.background = '#0f3460';
+  }
+}
+
+function updateFromWebcam() {
+  if (!webcam || !useWebcam) return;
+  
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = 256;
+  tempCanvas.height = 256;
+  const ctx = tempCanvas.getContext('2d');
+  ctx.drawImage(webcam, 0, 0, 256, 256);
+  
+  const imgData = ctx.getImageData(0, 0, 256, 256);
+  sourceData = new Uint8Array(imgData.data);
+  sourceWidth = 256;
+  sourceHeight = 256;
+}
+
+// ========== Mouse Controls ==========
+function setupMouseControls() {
+  canvas.addEventListener('mousedown', (e) => {
+    if (settings.mode >= 4) {
+      isDragging = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    }
+  });
+  
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging && settings.mode >= 4) {
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      
+      camRotY += dx * 0.01;
+      camRotX += dy * 0.01;
+      camRotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camRotX));
+      
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    }
+  });
+  
+  // Zoom with mouse wheel
+  canvas.addEventListener('wheel', (e) => {
+    if (settings.mode >= 4) {
+      e.preventDefault();
+      
+      // Zoom speed
+      const zoomSpeed = 0.1;
+      const delta = e.deltaY > 0 ? 1 + zoomSpeed : 1 - zoomSpeed;
+      
+      settings.camDist = Math.max(100, Math.min(1000, settings.camDist * delta));
+      
+      // Update slider
+      const slider = document.getElementById('camDist');
+      if (slider) {
+        slider.value = Math.round(settings.camDist);
+        const val = document.getElementById('camDistVal');
+        if (val) val.textContent = Math.round(settings.camDist);
+      }
+    }
+  }, { passive: false });
+}
+
+// ========== UI Controls ==========
+function setupControls() {
+  const updateDisplay = (id, suffix = '') => {
+    const el = document.getElementById(id);
+    const val = document.getElementById(id + 'Val');
+    if (val) val.textContent = el.value + suffix;
+  };
+  
+  // Presets
+  document.getElementById('presetNoise').addEventListener('click', () => { stopWebcam(); createNoiseMap(); resetParticles(); });
+  document.getElementById('presetGradient').addEventListener('click', () => { stopWebcam(); createGradientMap(); resetParticles(); });
+  document.getElementById('presetRadial').addEventListener('click', () => { stopWebcam(); createRadialMap(); resetParticles(); });
+  document.getElementById('preset3DFlow').addEventListener('click', () => { stopWebcam(); create3DFlowMap(); resetParticles(); });
+  
+  document.getElementById('webcamBtn').addEventListener('click', () => {
+    if (useWebcam) { stopWebcam(); create3DFlowMap(); }
+    else { startWebcam(); }
+  });
+  
+  // Helper to update 2D direction section visibility
+  function update2DDirectionVisibility() {
+    const show2DDir = settings.mode < 4 || (settings.mode >= 4 && settings.dir3DSource === 1);
+    document.getElementById('section2DDirection').style.display = show2DDir ? 'block' : 'none';
+  }
+  
+  // Mode
+  document.getElementById('mode').addEventListener('change', (e) => {
+    settings.mode = parseInt(e.target.value);
+    document.getElementById('section3D').style.display = settings.mode >= 4 ? 'block' : 'none';
+    update2DDirectionVisibility();
+    resetParticles();
+  });
+  
+  // Quality
+  document.getElementById('quality').addEventListener('change', (e) => {
+    settings.quality = parseInt(e.target.value);
+  });
+  
+  // 3D Settings
+  document.getElementById('spawn3DMode').addEventListener('change', (e) => { settings.spawn3DMode = parseInt(e.target.value); });
+  document.getElementById('dir3DSource').addEventListener('change', (e) => { 
+    settings.dir3DSource = parseInt(e.target.value); 
+    update2DDirectionVisibility();
+  });
+  document.getElementById('depthScale').addEventListener('input', (e) => { settings.depthScale = parseInt(e.target.value); updateDisplay('depthScale'); });
+  document.getElementById('imgAttr').addEventListener('input', (e) => { settings.imgAttr = parseInt(e.target.value); updateDisplay('imgAttr'); });
+  document.getElementById('camDist').addEventListener('input', (e) => { settings.camDist = parseInt(e.target.value); updateDisplay('camDist'); });
+  document.getElementById('fov').addEventListener('input', (e) => { settings.fov = parseInt(e.target.value); updateDisplay('fov', '°'); });
+  
+  // Spawn
+  document.getElementById('seed').addEventListener('input', (e) => { settings.seed = parseInt(e.target.value); updateDisplay('seed'); });
+  document.getElementById('spawnType').addEventListener('change', (e) => { 
+    settings.spawnType = parseInt(e.target.value); 
+    if (settings.spawnType === 2) buildBrightnessSampler();
+  });
+  document.getElementById('count').addEventListener('input', (e) => { settings.count = parseInt(e.target.value); updateDisplay('count'); });
+  document.getElementById('cutoff').addEventListener('input', (e) => { 
+    settings.cutoff = parseInt(e.target.value); 
+    updateDisplay('cutoff', '%'); 
+    if (settings.spawnType === 2) buildBrightnessSampler();
+  });
+  
+  // Particle
+  document.getElementById('lifetime').addEventListener('input', (e) => { settings.lifetime = parseInt(e.target.value); updateDisplay('lifetime'); });
+  document.getElementById('size').addEventListener('input', (e) => { settings.size = parseFloat(e.target.value); updateDisplay('size'); });
+  document.getElementById('speed').addEventListener('input', (e) => { settings.speed = parseFloat(e.target.value); updateDisplay('speed'); });
+  
+  // 2D Direction
+  document.getElementById('channel').addEventListener('change', (e) => { settings.channel = parseInt(e.target.value); });
+  document.getElementById('shift').addEventListener('input', (e) => { settings.shift = parseInt(e.target.value); updateDisplay('shift', '°'); });
+  document.getElementById('fluct').addEventListener('input', (e) => { settings.fluct = parseInt(e.target.value); updateDisplay('fluct', '°'); });
+  document.getElementById('dynFluct').addEventListener('input', (e) => { settings.dynFluct = parseInt(e.target.value); updateDisplay('dynFluct', '°'); });
+  
+  // Forces
+  document.getElementById('attrForce').addEventListener('input', (e) => { settings.attrForce = parseFloat(e.target.value); updateDisplay('attrForce'); });
+  document.getElementById('attrAngle').addEventListener('input', (e) => { settings.attrAngle = parseInt(e.target.value); updateDisplay('attrAngle', '°'); });
+  
+  // Color
+  document.getElementById('colorMode').addEventListener('change', (e) => { settings.colorMode = parseInt(e.target.value); });
+  document.getElementById('customColor').addEventListener('input', (e) => { settings.customColor = e.target.value; });
+  document.getElementById('startColor').addEventListener('input', (e) => { settings.startColor = e.target.value; });
+  document.getElementById('endColor').addEventListener('input', (e) => { settings.endColor = e.target.value; });
+  
+  // Background
+  document.getElementById('transparentBg').addEventListener('change', (e) => { settings.transparentBg = e.target.checked; });
+  document.getElementById('bgColor').addEventListener('input', (e) => { settings.bgColor = e.target.value; });
+  document.getElementById('fade').addEventListener('input', (e) => { settings.fade = parseInt(e.target.value); updateDisplay('fade'); });
+  
+  // Buttons
+  document.getElementById('resetBtn').addEventListener('click', resetParticles);
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'vectory_webgl.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+  
+  // Image upload
+  document.getElementById('imageInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      stopWebcam();
+      const img = new Image();
+      img.onload = () => {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = img.width;
+        tempCanvas.height = img.height;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, img.width, img.height);
+        sourceData = new Uint8Array(imgData.data);
+        sourceWidth = img.width;
+        sourceHeight = img.height;
+        updatePreview();
+        resetParticles();
+      };
+      img.src = URL.createObjectURL(file);
+    }
+  });
+  
+  // Initialize section visibility
+  document.getElementById('section3D').style.display = settings.mode >= 4 ? 'block' : 'none';
+  update2DDirectionVisibility();
+}
+
+function resetParticles() {
+  particleCount = 0;
+  particleIdCounter = 0;
+  for (let i = 0; i < MAX_PARTICLES; i++) {
+    trailCounts[i] = 0;
+  }
+  // Rebuild brightness sampler if needed
+  if (settings.spawnType === 2) {
+    buildBrightnessSampler();
+  }
+}
+
+// ========== Initialization ==========
+function init() {
+  // Set canvas size
+  const container = document.getElementById('canvas-container');
+  canvasSize = Math.min(container.clientWidth - 40, container.clientHeight - 80, 800);
+  
+  if (!initWebGL()) return;
+  
+  create3DFlowMap();
+  buildBrightnessSampler();
+  setupControls();
+  setupMouseControls();
+  
+  mainLoop();
+}
+
+window.addEventListener('load', init);
+window.addEventListener('resize', () => {
+  const container = document.getElementById('canvas-container');
+  canvasSize = Math.min(container.clientWidth - 40, container.clientHeight - 80, 800);
+  canvas.width = canvasSize;
+  canvas.height = canvasSize;
+  gl.viewport(0, 0, canvasSize, canvasSize);
+});
+</script>
+</body>
+</html>
