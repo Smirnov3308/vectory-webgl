@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF/Users/vadim/Downloads/index (3).html-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vectory 3D WebGL - High Performance Particles</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -506,8 +506,8 @@
         <p class="hint">Pull particles back to image position</p>
       </div>
       <div class="control-group">
-        <label>Camera Distance <span class="value-display" id="camDistVal">400</span></label>
-        <input type="range" id="camDist" min="100" max="1000" value="400">
+        <label>Camera Distance <span class="value-display" id="camDistVal">700</span></label>
+        <input type="range" id="camDist" min="100" max="1000" value="700">
       </div>
       <div class="control-group">
         <label>Field of View <span class="value-display" id="fovVal">60°</span></label>
@@ -681,7 +681,7 @@ const settings = {
   bgColor: '#0f0f1a',
   fade: 3,
   // 3D settings
-  camDist: 400,
+  camDist: 700,
   fov: 60,
   depthScale: 100,
   spawn3DMode: 2,
@@ -1950,9 +1950,9 @@ function updateFromWebcam() {
   tempCanvas.height = 256;
   const ctx = tempCanvas.getContext('2d');
   
-  // Flip vertically
-  ctx.translate(0, 256);
-  ctx.scale(1, -1);
+  // Mirror horizontally and flip vertically
+  ctx.translate(256, 256);
+  ctx.scale(-1, -1);
   ctx.drawImage(webcam, 0, 0, 256, 256);
   
   const imgData = ctx.getImageData(0, 0, 256, 256);
@@ -2047,7 +2047,7 @@ function setupControls() {
     const countVal = document.getElementById('countVal');
     if (settings.mode === 2) {
       // Static Trails (2D) - allow more particles
-      countSlider.max = 10000;
+      countSlider.max = 5000;
       settings.count = 2000;
     } else if (settings.mode === 5) {
       // Trails (3D) - fewer particles for better performance
