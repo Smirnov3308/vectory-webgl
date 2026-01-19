@@ -530,8 +530,8 @@
         </select>
       </div>
       <div class="control-group">
-        <label>Particles per frame <span class="value-display" id="countVal">50</span></label>
-        <input type="range" id="count" min="1" max="2000" value="50">
+        <label>Particles per frame <span class="value-display" id="countVal">1000</span></label>
+        <input type="range" id="count" min="1" max="2000" value="1000">
       </div>
       <div class="control-group">
         <label>Brightness Cutoff <span class="value-display" id="cutoffVal">30%</span></label>
@@ -658,7 +658,7 @@ const settings = {
   mode: 4,
   seed: 1,
   spawnType: 1,
-  count: 50,
+  count: 1000,
   cutoff: 30,
   lifetime: 100,
   size: 3,
@@ -1757,13 +1757,14 @@ function fractalNoise(x, y, seed, octaves = 4) {
 }
 
 function createNoiseMap() {
-  const size = 256;
-  const data = new Uint8Array(size * size * 4);
+  const width = 512;
+  const height = 288; // 16:9 aspect ratio
+  const data = new Uint8Array(width * height * 4);
   const scale = 0.02;
   
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const idx = (y * size + x) * 4;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
       // Different noise for each RGB channel = different 3D directions
       data[idx] = Math.floor(fractalNoise(x * scale, y * scale, settings.seed) * 255);
       data[idx + 1] = Math.floor(fractalNoise(x * scale, y * scale, settings.seed + 1000) * 255);
@@ -1773,19 +1774,21 @@ function createNoiseMap() {
   }
   
   sourceData = data;
-  sourceWidth = size;
-  sourceHeight = size;
+  sourceWidth = width;
+  sourceHeight = height;
+  updateCanvasSize();
   updatePreview();
 }
 
 function createGradientMap() {
-  const size = 256;
-  const data = new Uint8Array(size * size * 4);
+  const width = 512;
+  const height = 288; // 16:9 aspect ratio
+  const data = new Uint8Array(width * height * 4);
   
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const idx = (y * size + x) * 4;
-      const val = Math.floor((x / size) * 255);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      const val = Math.floor((x / width) * 255);
       data[idx] = val;
       data[idx + 1] = val;
       data[idx + 2] = val;
@@ -1794,19 +1797,21 @@ function createGradientMap() {
   }
   
   sourceData = data;
-  sourceWidth = size;
-  sourceHeight = size;
+  sourceWidth = width;
+  sourceHeight = height;
+  updateCanvasSize();
   updatePreview();
 }
 
 function createRadialMap() {
-  const size = 256;
-  const data = new Uint8Array(size * size * 4);
-  const cx = size / 2, cy = size / 2;
+  const width = 512;
+  const height = 288; // 16:9 aspect ratio
+  const data = new Uint8Array(width * height * 4);
+  const cx = width / 2, cy = height / 2;
   
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const idx = (y * size + x) * 4;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
       
       // Direction from center outward
       const dx = x - cx;
@@ -1823,23 +1828,26 @@ function createRadialMap() {
   }
   
   sourceData = data;
-  sourceWidth = size;
-  sourceHeight = size;
+  sourceWidth = width;
+  sourceHeight = height;
+  updateCanvasSize();
   updatePreview();
 }
 
 function create3DFlowMap() {
-  const size = 256;
-  const data = new Uint8Array(size * size * 4);
-  const cx = size / 2, cy = size / 2;
+  const width = 512;
+  const height = 288; // 16:9 aspect ratio
+  const data = new Uint8Array(width * height * 4);
+  const cx = width / 2, cy = height / 2;
+  const maxDist = Math.min(width, height) * 0.5;
   
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const idx = (y * size + x) * 4;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
       
       const dx = x - cx;
       const dy = y - cy;
-      const dist = Math.sqrt(dx * dx + dy * dy) / (size * 0.5);
+      const dist = Math.sqrt(dx * dx + dy * dy) / maxDist;
       const angle = Math.atan2(dy, dx);
       
       // Spiral flow: tangential + slight inward/outward based on noise
@@ -1863,8 +1871,9 @@ function create3DFlowMap() {
   }
   
   sourceData = data;
-  sourceWidth = size;
-  sourceHeight = size;
+  sourceWidth = width;
+  sourceHeight = height;
+  updateCanvasSize();
   updatePreview();
 }
 
@@ -1902,6 +1911,9 @@ async function startWebcam() {
     await webcam.play();
     
     useWebcam = true;
+    sourceWidth = 256;
+    sourceHeight = 256;
+    updateCanvasSize();
     
     const btn = document.getElementById('webcamBtn');
     btn.textContent = '📷 Webcam ON';
@@ -1937,6 +1949,10 @@ function updateFromWebcam() {
   tempCanvas.width = 256;
   tempCanvas.height = 256;
   const ctx = tempCanvas.getContext('2d');
+  
+  // Flip vertically
+  ctx.translate(0, 256);
+  ctx.scale(1, -1);
   ctx.drawImage(webcam, 0, 0, 256, 256);
   
   const imgData = ctx.getImageData(0, 0, 256, 256);
@@ -2025,6 +2041,25 @@ function setupControls() {
     settings.mode = parseInt(e.target.value);
     document.getElementById('section3D').style.display = settings.mode >= 4 ? 'block' : 'none';
     update2DDirectionVisibility();
+    
+    // Auto-adjust particles per frame based on mode
+    const countSlider = document.getElementById('count');
+    const countVal = document.getElementById('countVal');
+    if (settings.mode === 2) {
+      // Static Trails (2D) - allow more particles
+      countSlider.max = 10000;
+      settings.count = 2000;
+    } else if (settings.mode === 5) {
+      // Trails (3D) - fewer particles for better performance
+      countSlider.max = 2000;
+      settings.count = 200;
+    } else {
+      countSlider.max = 2000;
+      settings.count = 1000;
+    }
+    countSlider.value = settings.count;
+    countVal.textContent = settings.count;
+    
     resetParticles();
   });
   
@@ -2103,6 +2138,7 @@ function setupControls() {
         sourceData = new Uint8Array(imgData.data);
         sourceWidth = img.width;
         sourceHeight = img.height;
+        updateCanvasSize();
         updatePreview();
         resetParticles();
       };
@@ -2128,26 +2164,46 @@ function resetParticles() {
 }
 
 // ========== Initialization ==========
-function init() {
-  // Set canvas size (16:9 aspect ratio)
+function updateCanvasSize() {
   const container = document.getElementById('canvas-container');
   const maxWidth = container.clientWidth - 20;
   const maxHeight = container.clientHeight - 60;
   
-  // Calculate size maintaining 16:9 aspect ratio
-  if (maxWidth / maxHeight > 16 / 9) {
+  // Use source image aspect ratio, default to 1:1 if no source
+  const aspectRatio = sourceWidth && sourceHeight ? sourceWidth / sourceHeight : 1;
+  
+  // Calculate size maintaining source aspect ratio
+  if (maxWidth / maxHeight > aspectRatio) {
     // Height limited
     canvasHeight = maxHeight;
-    canvasWidth = Math.round(canvasHeight * 16 / 9);
+    canvasWidth = Math.round(canvasHeight * aspectRatio);
   } else {
     // Width limited
     canvasWidth = maxWidth;
-    canvasHeight = Math.round(canvasWidth * 9 / 16);
+    canvasHeight = Math.round(canvasWidth / aspectRatio);
   }
+  
+  if (canvas) {
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    if (gl) gl.viewport(0, 0, canvasWidth, canvasHeight);
+  }
+}
+
+function init() {
+  // Initialize with default size
+  const container = document.getElementById('canvas-container');
+  const maxWidth = container.clientWidth - 20;
+  const maxHeight = container.clientHeight - 60;
+  
+  // Default to 1:1 initially
+  canvasWidth = Math.min(maxWidth, maxHeight);
+  canvasHeight = canvasWidth;
   
   if (!initWebGL()) return;
   
   create3DFlowMap();
+  updateCanvasSize(); // Update size based on source
   buildBrightnessSampler();
   setupControls();
   setupMouseControls();
@@ -2156,24 +2212,7 @@ function init() {
 }
 
 window.addEventListener('load', init);
-window.addEventListener('resize', () => {
-  const container = document.getElementById('canvas-container');
-  const maxWidth = container.clientWidth - 20;
-  const maxHeight = container.clientHeight - 60;
-  
-  // Calculate size maintaining 16:9 aspect ratio
-  if (maxWidth / maxHeight > 16 / 9) {
-    canvasHeight = maxHeight;
-    canvasWidth = Math.round(canvasHeight * 16 / 9);
-  } else {
-    canvasWidth = maxWidth;
-    canvasHeight = Math.round(canvasWidth * 9 / 16);
-  }
-  
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
-  gl.viewport(0, 0, canvasWidth, canvasHeight);
-});
+window.addEventListener('resize', updateCanvasSize);
 </script>
 </body>
 </html>
