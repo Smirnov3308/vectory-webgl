@@ -271,7 +271,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 10px;
       background: var(--bg-dark);
       position: relative;
     }
@@ -291,12 +291,12 @@
     #statsBar {
       background: rgba(26, 26, 36, 0.9);
       backdrop-filter: blur(10px);
-      padding: 10px 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
       display: flex;
-      gap: 24px;
+      gap: 20px;
       border: 1px solid var(--border);
       position: relative;
       z-index: 1;
@@ -477,14 +477,6 @@
           <option value="5">🧊 Trails (3D)</option>
         </select>
       </div>
-      <div class="control-group">
-        <label>Quality</label>
-        <select id="quality">
-          <option value="1">Fast (Low)</option>
-          <option value="2" selected>Balanced (Medium)</option>
-          <option value="3">Quality (High)</option>
-        </select>
-      </div>
     </div>
     
     <div class="section" id="section3D">
@@ -631,7 +623,7 @@
     <div class="section">
       <div class="section-title">Background</div>
       <div class="control-group checkbox-group">
-        <input type="checkbox" id="transparentBg">
+        <input type="checkbox" id="transparentBg" checked>
         <label for="transparentBg">Transparent Background</label>
       </div>
       <div class="control-group">
@@ -664,7 +656,6 @@
 // ========== Settings ==========
 const settings = {
   mode: 4,
-  quality: 2,
   seed: 1,
   spawnType: 1,
   count: 50,
@@ -686,7 +677,7 @@ const settings = {
   startColor: '#ffffff',
   endColor: '#e94560',
   // Background
-  transparentBg: false,
+  transparentBg: true,
   bgColor: '#0f0f1a',
   fade: 3,
   // 3D settings
@@ -701,7 +692,8 @@ const settings = {
 // ========== WebGL State ==========
 let gl;
 let canvas;
-let canvasSize = 700;
+let canvasWidth = 1280;
+let canvasHeight = 720;
 let program;
 let trailProgram;
 
@@ -799,8 +791,8 @@ function buildBrightnessSampler() {
       const brightness = 0.2126 * sourceData[idx] + 0.7152 * sourceData[idx + 1] + 0.0722 * sourceData[idx + 2];
       if (brightness >= cutoffThreshold) {
         // Store canvas coordinates
-        const canvasX = (x / sourceWidth) * canvasSize;
-        const canvasY = (y / sourceHeight) * canvasSize;
+        const canvasX = (x / sourceWidth) * canvasWidth;
+        const canvasY = (y / sourceHeight) * canvasHeight;
         brightnessSamples.push({ x: canvasX, y: canvasY, brightness });
       }
     }
@@ -922,8 +914,8 @@ function identityMatrix() {
 // ========== WebGL Initialization ==========
 function initWebGL() {
   canvas = document.getElementById('glCanvas');
-  canvas.width = canvasSize;
-  canvas.height = canvasSize;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
   
   gl = canvas.getContext('webgl', { 
     alpha: false, 
@@ -992,9 +984,9 @@ function createProgram(vsSource, fsSource) {
 function getSourcePixel(x, y) {
   if (!sourceData) return { r: 128, g: 128, b: 128 };
   
-  const sx = Math.floor((x / canvasSize) * sourceWidth);
+  const sx = Math.floor((x / canvasWidth) * sourceWidth);
   // Flip Y: WebGL Y=0 is bottom, image Y=0 is top
-  const sy = Math.floor(((canvasSize - y) / canvasSize) * sourceHeight);
+  const sy = Math.floor(((canvasHeight - y) / canvasHeight) * sourceHeight);
   const cx = Math.max(0, Math.min(sourceWidth - 1, sx));
   const cy = Math.max(0, Math.min(sourceHeight - 1, sy));
   
@@ -1028,16 +1020,16 @@ function spawnParticle(index) {
     spawnY = sample.y;
   } else {
     // Random spawn
-    spawnX = hashRange(key, 1, 0, canvasSize);
-    spawnY = hashRange(key, 2, 0, canvasSize);
+    spawnX = hashRange(key, 1, 0, canvasWidth);
+    spawnY = hashRange(key, 2, 0, canvasHeight);
   }
   
   // Get brightness for depth calculation
   const brightness = getBrightness(spawnX, spawnY);
   
   // Convert to centered coordinates
-  const x = spawnX - canvasSize / 2;
-  const y = spawnY - canvasSize / 2;
+  const x = spawnX - canvasWidth / 2;
+  const y = spawnY - canvasHeight / 2;
   
   // Z from brightness or random
   let z = 0;
@@ -1163,8 +1155,8 @@ function updateParticles() {
     if (lifetimes[i] <= 0) continue;
     
     // Get current position for direction sampling
-    const canvasX = positions[i3] + canvasSize / 2;
-    const canvasY = positions[i3 + 1] + canvasSize / 2;
+    const canvasX = positions[i3] + canvasWidth / 2;
+    const canvasY = positions[i3 + 1] + canvasHeight / 2;
     
     const pId = particleIds[i];
     const step = Math.floor(maxLifetimes[i] - lifetimes[i]);
@@ -1272,10 +1264,11 @@ function updateParticles() {
     positions[i3 + 2] += velocities[i3 + 2];
     
     // Bounds check (matching original p5.js version)
-    const halfSize = canvasSize / 2 * 1.5;
+    const halfWidth = canvasWidth / 2 * 1.5;
+    const halfHeight = canvasHeight / 2 * 1.5;
     const maxDepth = settings.depthScale * 2;
-    if (Math.abs(positions[i3]) > halfSize || 
-        Math.abs(positions[i3 + 1]) > halfSize ||
+    if (Math.abs(positions[i3]) > halfWidth || 
+        Math.abs(positions[i3 + 1]) > halfHeight ||
         Math.abs(positions[i3 + 2]) > maxDepth) {
       continue;
     }
@@ -1388,18 +1381,20 @@ function render() {
   let proj, view;
   if (settings.mode >= 4) {
     // 3D perspective
-    proj = perspectiveMatrix(settings.fov, 1, 1, 5000);
+    const aspect = canvasWidth / canvasHeight;
+    proj = perspectiveMatrix(settings.fov, aspect, 1, 5000);
     view = viewMatrix(camRotX, camRotY, settings.camDist);
   } else {
     // 2D orthographic
-    const s = canvasSize / 2;
-    proj = orthoMatrix(-s, s, -s, s, -1000, 1000);
+    const hw = canvasWidth / 2;
+    const hh = canvasHeight / 2;
+    proj = orthoMatrix(-hw, hw, -hh, hh, -1000, 1000);
     view = identityMatrix();
   }
   
   gl.uniformMatrix4fv(uProjection, false, proj);
   gl.uniformMatrix4fv(uView, false, view);
-  gl.uniform2f(uResolution, canvasSize, canvasSize);
+  gl.uniform2f(uResolution, canvasWidth, canvasHeight);
   gl.uniform1f(uIs3D, settings.mode >= 4 ? 1.0 : 0.0);
   
   // Upload position data
@@ -1441,7 +1436,7 @@ function renderTrails3D(proj, view) {
   
   gl.uniformMatrix4fv(uProjection, false, proj);
   gl.uniformMatrix4fv(uView, false, view);
-  gl.uniform2f(uResolution, canvasSize, canvasSize);
+  gl.uniform2f(uResolution, canvasWidth, canvasHeight);
   gl.uniform1f(uIs3D, settings.mode >= 4 ? 1.0 : 0.0);
   
   // Count total trail points
@@ -1518,13 +1513,14 @@ function renderStaticTrails() {
   
   gl.useProgram(program);
   
-  const s = canvasSize / 2;
-  const proj = orthoMatrix(-s, s, -s, s, -1000, 1000);
+  const hw = canvasWidth / 2;
+  const hh = canvasHeight / 2;
+  const proj = orthoMatrix(-hw, hw, -hh, hh, -1000, 1000);
   const view = identityMatrix();
   
   gl.uniformMatrix4fv(uProjection, false, proj);
   gl.uniformMatrix4fv(uView, false, view);
-  gl.uniform2f(uResolution, canvasSize, canvasSize);
+  gl.uniform2f(uResolution, canvasWidth, canvasHeight);
   gl.uniform1f(uIs3D, 0.0);  // 2D mode - no size attenuation
   
   // Pre-compute attraction direction
@@ -1559,12 +1555,12 @@ function renderStaticTrails() {
       spawnX = sample.x;
       spawnY = sample.y;
     } else {
-      spawnX = hashRange(key, 1, 0, canvasSize);
-      spawnY = hashRange(key, 2, 0, canvasSize);
+      spawnX = hashRange(key, 1, 0, canvasWidth);
+      spawnY = hashRange(key, 2, 0, canvasHeight);
     }
     
-    let x = spawnX - canvasSize / 2;
-    let y = spawnY - canvasSize / 2;
+    let x = spawnX - canvasWidth / 2;
+    let y = spawnY - canvasHeight / 2;
     
     const startPixel = getSourcePixel(spawnX, spawnY);
     const speed = settings.speed * (0.5 + hashFloat2(key, 3) * 0.5);
@@ -1579,10 +1575,10 @@ function renderStaticTrails() {
     let vx = 0, vy = 0;
     
     for (let step = 0; step < maxSteps; step++) {
-      const canvasX = x + canvasSize / 2;
-      const canvasY = y + canvasSize / 2;
+      const canvasX = x + canvasWidth / 2;
+      const canvasY = y + canvasHeight / 2;
       
-      if (canvasX < 0 || canvasX >= canvasSize || canvasY < 0 || canvasY >= canvasSize) break;
+      if (canvasX < 0 || canvasX >= canvasWidth || canvasY < 0 || canvasY >= canvasHeight) break;
       
       const pixel = getSourcePixel(canvasX, canvasY);
       const brightness = 0.2126 * pixel.r + 0.7152 * pixel.g + 0.0722 * pixel.b;
@@ -2032,11 +2028,6 @@ function setupControls() {
     resetParticles();
   });
   
-  // Quality
-  document.getElementById('quality').addEventListener('change', (e) => {
-    settings.quality = parseInt(e.target.value);
-  });
-  
   // 3D Settings
   document.getElementById('spawn3DMode').addEventListener('change', (e) => { settings.spawn3DMode = parseInt(e.target.value); });
   document.getElementById('dir3DSource').addEventListener('change', (e) => { 
@@ -2138,9 +2129,21 @@ function resetParticles() {
 
 // ========== Initialization ==========
 function init() {
-  // Set canvas size
+  // Set canvas size (16:9 aspect ratio)
   const container = document.getElementById('canvas-container');
-  canvasSize = Math.min(container.clientWidth - 40, container.clientHeight - 80, 800);
+  const maxWidth = container.clientWidth - 20;
+  const maxHeight = container.clientHeight - 60;
+  
+  // Calculate size maintaining 16:9 aspect ratio
+  if (maxWidth / maxHeight > 16 / 9) {
+    // Height limited
+    canvasHeight = maxHeight;
+    canvasWidth = Math.round(canvasHeight * 16 / 9);
+  } else {
+    // Width limited
+    canvasWidth = maxWidth;
+    canvasHeight = Math.round(canvasWidth * 9 / 16);
+  }
   
   if (!initWebGL()) return;
   
@@ -2155,10 +2158,21 @@ function init() {
 window.addEventListener('load', init);
 window.addEventListener('resize', () => {
   const container = document.getElementById('canvas-container');
-  canvasSize = Math.min(container.clientWidth - 40, container.clientHeight - 80, 800);
-  canvas.width = canvasSize;
-  canvas.height = canvasSize;
-  gl.viewport(0, 0, canvasSize, canvasSize);
+  const maxWidth = container.clientWidth - 20;
+  const maxHeight = container.clientHeight - 60;
+  
+  // Calculate size maintaining 16:9 aspect ratio
+  if (maxWidth / maxHeight > 16 / 9) {
+    canvasHeight = maxHeight;
+    canvasWidth = Math.round(canvasHeight * 16 / 9);
+  } else {
+    canvasWidth = maxWidth;
+    canvasHeight = Math.round(canvasWidth * 9 / 16);
+  }
+  
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+  gl.viewport(0, 0, canvasWidth, canvasHeight);
 });
 </script>
 </body>
