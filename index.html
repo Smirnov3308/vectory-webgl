@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vectory 3D - Particle System</title>
+  <title>Vectory - Particle System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -80,17 +80,6 @@
       display: flex;
       align-items: center;
       gap: 10px;
-    }
-    
-    .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: hsl(var(--foreground));
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
     }
     
     .logo h1 {
@@ -400,11 +389,11 @@
     .camera-btn {
       width: 100%;
       margin-bottom: 8px;
-      background: linear-gradient(135deg, hsl(280 70% 50%) 0%, hsl(320 70% 50%) 100%);
     }
     
     .camera-btn.active {
-      background: linear-gradient(135deg, hsl(142 70% 40%) 0%, hsl(142 70% 35%) 100%);
+      background: hsl(142 70% 40%);
+      color: white;
     }
     
     /* Preview */
@@ -548,27 +537,207 @@
       color: hsl(var(--foreground));
     }
     
+    .rotate-hint .hint-mobile {
+      display: none;
+    }
+    
+    @media (pointer: coarse) {
+      .rotate-hint .hint-desktop {
+        display: none;
+      }
+      .rotate-hint .hint-mobile {
+        display: inline;
+      }
+    }
+    
+    /* Flash effect */
+    .flash-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      border-radius: var(--radius);
+      z-index: 100;
+    }
+    
+    .flash-overlay.flash {
+      animation: flashAnim 0.3s ease-out;
+    }
+    
+    @keyframes flashAnim {
+      0% { opacity: 0.8; }
+      100% { opacity: 0; }
+    }
+    
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      font-size: 13px;
+      color: hsl(var(--foreground));
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    
+    .toast .toast-icon {
+      width: 20px;
+      height: 20px;
+      background: hsl(142 70% 45%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .toast .toast-icon svg {
+      width: 12px;
+      height: 12px;
+      color: white;
+    }
+    
     /* Responsive */
     @media (max-width: 900px) {
       body {
-        flex-direction: column-reverse;
+        flex-direction: column;
       }
       
       #controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
         min-width: 100%;
-        height: 50vh;
+        height: auto;
+        max-height: 70vh;
         border-right: none;
         border-top: 1px solid hsl(var(--border));
+        border-radius: 16px 16px 0 0;
+        transform: translateY(calc(100% - 60px));
+        transition: transform 0.3s ease;
+        z-index: 100;
+      }
+      
+      #controls.expanded {
+        transform: translateY(0);
+      }
+      
+      #controls .sidebar-header {
+        display: none;
+      }
+      
+      #controls .sidebar-content {
+        padding-top: 8px;
+        max-height: calc(70vh - 60px);
+      }
+      
+      #controls .sidebar-footer {
+        display: none;
+      }
+      
+      /* Drag handle */
+      .mobile-handle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px;
+        cursor: grab;
+      }
+      
+      .mobile-handle::before {
+        content: '';
+        width: 36px;
+        height: 4px;
+        background: hsl(var(--muted-foreground) / 0.4);
+        border-radius: 2px;
+      }
+      
+      .mobile-handle-label {
+        font-size: 12px;
+        color: hsl(var(--muted-foreground));
+        margin-top: 4px;
       }
       
       #canvas-container {
-        height: 50vh;
+        height: calc(100vh - 60px);
+        height: calc(100dvh - 60px);
+        padding-bottom: 70px;
+      }
+      
+      /* Floating toolbar */
+      .mobile-toolbar {
+        display: flex;
+        position: fixed;
+        bottom: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        gap: 8px;
+        padding: 8px;
+        background: hsl(var(--card) / 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid hsl(var(--border));
+        border-radius: 12px;
+        z-index: 50;
+      }
+      
+      .mobile-toolbar button {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border-radius: 10px;
+      }
+      
+      .mobile-toolbar button svg {
+        width: 20px;
+        height: 20px;
+      }
+      
+      .mobile-toolbar button.active {
+        background: hsl(142 70% 40%);
       }
       
       .rotate-hint {
-        bottom: 8px;
-        padding: 6px 10px;
+        bottom: 140px;
+      }
+      
+      /* Collapse all sections by default on mobile */
+      #controls .section .section-content {
+        display: none;
+      }
+      
+      #controls .section.mobile-expanded .section-content {
+        display: block;
+      }
+    }
+    
+    @media (min-width: 901px) {
+      .mobile-handle {
+        display: none;
+      }
+      
+      .mobile-toolbar {
+        display: none;
       }
     }
     
@@ -594,18 +763,21 @@
 </head>
 <body>
   <div id="controls">
+    <div class="mobile-handle" id="mobileHandle">
+      <span class="mobile-handle-label">Settings</span>
+    </div>
+    
     <div class="sidebar-header">
       <div class="logo">
-        <div class="logo-icon">◎</div>
         <div>
-          <h1>Vectory 3D</h1>
+          <h1>Vectory</h1>
           <p class="logo-subtitle">Particle System</p>
         </div>
       </div>
     </div>
     
     <div class="sidebar-content">
-      <button class="camera-btn" id="webcamBtn">
+      <button class="camera-btn secondary" id="webcamBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
         Enable Camera
       </button>
@@ -613,18 +785,18 @@
       <!-- Source Section -->
       <div class="section">
         <button class="section-trigger" onclick="toggleSection(this)">
-          Source
+          Image
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
         </button>
         <div class="section-content">
           <div class="control-group">
-            <label>Direction Map</label>
+            <label>Upload image</label>
             <input type="file" id="imageInput" accept="image/*">
           </div>
           <div class="preview-box" id="imagePreview">
             <span>3D Flow (default)</span>
           </div>
-          <p class="hint">RGB channels → XYZ directions</p>
+          <p class="hint">Colors define particle directions</p>
           <div class="preset-grid" style="margin-top: 10px;">
             <button class="outline" id="presetNoise">Noise</button>
             <button class="outline" id="presetGradient">Gradient</button>
@@ -684,8 +856,8 @@
             <input type="range" id="imgAttr" min="0" max="100" value="0">
           </div>
           <div class="control-group">
-            <label>Camera Distance <span class="value" id="camDistVal">700</span></label>
-            <input type="range" id="camDist" min="100" max="1000" value="700">
+            <label>Camera Distance <span class="value" id="camDistVal">500</span></label>
+            <input type="range" id="camDist" min="100" max="1000" value="500">
           </div>
           <div class="control-group">
             <label>Field of View <span class="value" id="fovVal">60°</span></label>
@@ -877,18 +1049,89 @@
     
     <div id="canvas-wrapper">
       <canvas id="glCanvas"></canvas>
+      <div class="flash-overlay" id="flashOverlay"></div>
       <div class="rotate-hint" id="rotateHint">
         <span>Drag to rotate</span>
-        <kbd>Scroll</kbd>
-        <span>to zoom</span>
+        <span class="hint-desktop"><kbd>Scroll</kbd> to zoom</span>
+        <span class="hint-mobile">Pinch to zoom</span>
       </div>
     </div>
+  </div>
+  
+  <!-- Mobile toolbar -->
+  <div class="mobile-toolbar" id="mobileToolbar">
+    <button class="secondary" id="mobileWebcamBtn" title="Camera">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+    </button>
+    <button id="mobileSaveBtn" title="Save">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+    </button>
+    <button class="secondary" id="mobileResetBtn" title="Reset">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+  </div>
+  
+  <!-- Toast notification -->
+  <div class="toast" id="toast">
+    <div class="toast-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <span id="toastMessage">Image saved!</span>
   </div>
 
 <script>
 // Toggle section collapse
 function toggleSection(trigger) {
-  trigger.parentElement.classList.toggle('collapsed');
+  const section = trigger.parentElement;
+  section.classList.toggle('collapsed');
+  // For mobile: toggle mobile-expanded class
+  section.classList.toggle('mobile-expanded');
+}
+
+// ========== Mobile UI ==========
+function setupMobileUI() {
+  const controls = document.getElementById('controls');
+  const handle = document.getElementById('mobileHandle');
+  
+  // Toggle panel on handle click
+  handle.addEventListener('click', () => {
+    controls.classList.toggle('expanded');
+  });
+  
+  // Close panel when clicking outside (on canvas)
+  document.getElementById('canvas-container').addEventListener('click', (e) => {
+    if (window.innerWidth <= 900 && controls.classList.contains('expanded')) {
+      controls.classList.remove('expanded');
+    }
+  });
+  
+  // Mobile toolbar buttons
+  document.getElementById('mobileWebcamBtn').addEventListener('click', () => {
+    if (useWebcam) { 
+      stopWebcam(); 
+      create3DFlowMap(); 
+    } else { 
+      startWebcam();
+    }
+  });
+  
+  document.getElementById('mobileSaveBtn').addEventListener('click', saveImage);
+  document.getElementById('mobileResetBtn').addEventListener('click', resetParticles);
+  
+  // Swipe down to close panel
+  let touchStartY = 0;
+  handle.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  
+  handle.addEventListener('touchmove', (e) => {
+    const deltaY = e.touches[0].clientY - touchStartY;
+    if (deltaY > 50 && controls.classList.contains('expanded')) {
+      controls.classList.remove('expanded');
+    } else if (deltaY < -50 && !controls.classList.contains('expanded')) {
+      controls.classList.add('expanded');
+    }
+  }, { passive: true });
 }
 
 // ========== Settings ==========
@@ -914,7 +1157,7 @@ const settings = {
   transparentBg: true,
   bgColor: '#09090b',
   fade: 3,
-  camDist: 700,
+  camDist: 500,
   fov: 60,
   depthScale: 100,
   spawn3DMode: 2,
@@ -1643,19 +1886,34 @@ async function startWebcam() {
     useWebcam = true;
     sourceWidth = 256; sourceHeight = 256;
     updateCanvasSize();
+    
+    // Update both desktop and mobile buttons
     const btn = document.getElementById('webcamBtn');
     btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Camera Active';
     btn.classList.add('active');
+    
+    const mobileBtn = document.getElementById('mobileWebcamBtn');
+    if (mobileBtn) mobileBtn.classList.add('active');
+    
     document.getElementById('imagePreview').innerHTML = '<span>📷 Live Feed</span>';
-  } catch (err) { alert('Could not access webcam: ' + err.message); }
+    return true;
+  } catch (err) { 
+    alert('Could not access webcam: ' + err.message); 
+    return false;
+  }
 }
 
 function stopWebcam() {
   if (webcam) { const stream = webcam.srcObject; if (stream) stream.getTracks().forEach(t => t.stop()); webcam.srcObject = null; webcam = null; }
   useWebcam = false;
+  
+  // Update both desktop and mobile buttons
   const btn = document.getElementById('webcamBtn');
   btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Enable Camera';
   btn.classList.remove('active');
+  
+  const mobileBtn = document.getElementById('mobileWebcamBtn');
+  if (mobileBtn) mobileBtn.classList.remove('active');
 }
 
 function updateFromWebcam() {
@@ -1680,6 +1938,8 @@ function updateHintVisibility() {
 function hideHintOnInteraction() { if (!hintInteracted) { hintInteracted = true; updateHintVisibility(); } }
 
 // ========== Mouse Controls ==========
+let lastPinchDist = 0;
+
 function setupMouseControls() {
   canvas.addEventListener('mousedown', (e) => { if (settings.mode >= 4) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; hideHintOnInteraction(); } });
   document.addEventListener('mouseup', () => { isDragging = false; });
@@ -1691,16 +1951,58 @@ function setupMouseControls() {
       lastMouseX = e.clientX; lastMouseY = e.clientY;
     }
   });
-  canvas.addEventListener('touchstart', (e) => { if (settings.mode >= 4 && e.touches.length === 1) { isDragging = true; lastMouseX = e.touches[0].clientX; lastMouseY = e.touches[0].clientY; hideHintOnInteraction(); } }, { passive: true });
-  canvas.addEventListener('touchmove', (e) => {
-    if (isDragging && settings.mode >= 4 && e.touches.length === 1) {
-      camRotY += (e.touches[0].clientX - lastMouseX) * 0.01;
-      camRotX += (e.touches[0].clientY - lastMouseY) * 0.01;
-      camRotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camRotX));
-      lastMouseX = e.touches[0].clientX; lastMouseY = e.touches[0].clientY;
+  
+  // Touch: single finger rotate
+  canvas.addEventListener('touchstart', (e) => { 
+    if (settings.mode >= 4) {
+      if (e.touches.length === 1) {
+        isDragging = true; 
+        lastMouseX = e.touches[0].clientX; 
+        lastMouseY = e.touches[0].clientY; 
+        hideHintOnInteraction();
+      } else if (e.touches.length === 2) {
+        // Start pinch zoom
+        isDragging = false;
+        lastPinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        hideHintOnInteraction();
+      }
     }
   }, { passive: true });
-  canvas.addEventListener('touchend', () => { isDragging = false; });
+  
+  canvas.addEventListener('touchmove', (e) => {
+    if (settings.mode >= 4) {
+      if (e.touches.length === 1 && isDragging) {
+        // Single finger: rotate
+        camRotY += (e.touches[0].clientX - lastMouseX) * 0.01;
+        camRotX += (e.touches[0].clientY - lastMouseY) * 0.01;
+        camRotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camRotX));
+        lastMouseX = e.touches[0].clientX; 
+        lastMouseY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        // Two fingers: pinch zoom
+        const pinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if (lastPinchDist > 0) {
+          const delta = lastPinchDist / pinchDist;
+          settings.camDist = Math.max(100, Math.min(1000, settings.camDist * delta));
+          document.getElementById('camDist').value = Math.round(settings.camDist);
+          document.getElementById('camDistVal').textContent = Math.round(settings.camDist);
+        }
+        lastPinchDist = pinchDist;
+      }
+    }
+  }, { passive: true });
+  
+  canvas.addEventListener('touchend', (e) => { 
+    isDragging = false; 
+    if (e.touches.length < 2) lastPinchDist = 0;
+  });
+  
   canvas.addEventListener('wheel', (e) => {
     if (settings.mode >= 4) {
       e.preventDefault(); hideHintOnInteraction();
@@ -1765,7 +2067,7 @@ function setupControls() {
   document.getElementById('bgColor').addEventListener('input', (e) => { settings.bgColor = e.target.value; });
   document.getElementById('fade').addEventListener('input', (e) => { settings.fade = parseInt(e.target.value); updateDisplay('fade'); });
   document.getElementById('resetBtn').addEventListener('click', resetParticles);
-  document.getElementById('saveBtn').addEventListener('click', () => { const link = document.createElement('a'); link.download = 'vectory.png'; link.href = canvas.toDataURL(); link.click(); });
+  document.getElementById('saveBtn').addEventListener('click', saveImage);
   document.getElementById('imageInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -1795,6 +2097,57 @@ function resetParticles() {
   if (settings.spawnType === 2) buildBrightnessSampler();
 }
 
+// ========== Save with Feedback ==========
+function showFlash() {
+  const flash = document.getElementById('flashOverlay');
+  flash.classList.remove('flash');
+  void flash.offsetWidth; // Trigger reflow
+  flash.classList.add('flash');
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  const toastMessage = document.getElementById('toastMessage');
+  toastMessage.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function playShutterSound() {
+  // Create a short click sound using Web Audio API
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  oscillator.frequency.value = 1800;
+  oscillator.type = 'square';
+  
+  gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+  
+  oscillator.start(audioCtx.currentTime);
+  oscillator.stop(audioCtx.currentTime + 0.05);
+}
+
+function saveImage() {
+  // Play feedback
+  showFlash();
+  playShutterSound();
+  
+  // Save the image
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  link.download = `vectory-${timestamp}.png`;
+  link.href = canvas.toDataURL();
+  link.click();
+  
+  // Show toast
+  showToast('Image saved to Downloads');
+}
+
 function updateCanvasSize() {
   const container = document.getElementById('canvas-container');
   const maxWidth = container.clientWidth - 32, maxHeight = container.clientHeight - 80;
@@ -1814,6 +2167,7 @@ function init() {
   buildBrightnessSampler();
   setupControls();
   setupMouseControls();
+  setupMobileUI();
   mainLoop();
 }
 
