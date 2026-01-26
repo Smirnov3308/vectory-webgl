@@ -648,13 +648,14 @@
         <button class="section-trigger" onclick="toggleSection(this)">Image<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="section-content">
           <input type="file" id="imageInput" accept="image/*">
-          <div class="preview-box" id="imagePreview"><span>3D Flow</span></div>
+          <div class="preview-box" id="imagePreview"><span>Source Image</span></div>
           <div class="preset-grid" style="margin-top:6px;">
             <button class="outline" id="presetNoise">Noise</button>
             <button class="outline" id="presetGradient">Gradient</button>
             <button class="outline" id="presetRadial">Radial</button>
             <button class="outline" id="preset3DFlow">3D Flow</button>
           </div>
+          <button class="outline" id="showEdgesBtn" style="width:100%;margin-top:6px;">👁️ Show Edge Map</button>
         </div>
       </div>
       
@@ -693,12 +694,16 @@
         </div>
       </div>
       
-      <div class="section collapsed">
+      <div class="section">
         <button class="section-trigger" onclick="toggleSection(this)">Particle<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="section-content">
           <div class="control-group"><label>Lifetime <span class="value" id="lifetimeVal">100</span></label><input type="range" id="lifetime" min="10" max="500" value="100"></div>
           <div class="control-group"><label>Size <span class="value" id="sizeVal">3</span></label><input type="range" id="size" min="1" max="30" value="3"></div>
           <div class="control-group"><label>Speed <span class="value" id="speedVal">2</span></label><input type="range" id="speed" min="0.5" max="20" value="2" step="0.5"></div>
+          <div class="control-group"><label>Edge → Size <span class="value" id="edgeSizeVal">0%</span></label><input type="range" id="edgeSize" min="0" max="100" value="0"></div>
+          <div class="control-group"><label>Edge → Opacity <span class="value" id="edgeOpacityVal">0%</span></label><input type="range" id="edgeOpacity" min="0" max="100" value="0"></div>
+          <div class="control-group"><label>Edge → Attract <span class="value" id="edgeAttrVal">0</span></label><input type="range" id="edgeAttr" min="0" max="100" value="0"></div>
+          <div class="control-group"><label>Edge Method</label><select id="edgeMethod"><option value="1">Sobel (smooth)</option><option value="2">Gaussian + Sobel</option><option value="3">Canny</option><option value="4">Adaptive</option></select></div>
         </div>
       </div>
       
@@ -787,7 +792,7 @@
 <script>
 function toggleSection(t){const s=t.parentElement;s.classList.toggle('collapsed');s.classList.toggle('mobile-expanded');}
 
-const defaultSettings={mode:4,seed:1,spawnType:1,count:1000,cutoff:30,lifetime:100,size:3,speed:2,channel:1,shift:0,fluct:0,dynFluct:0,attrForce:0,attrAngle:0,colorMode:1,customColor:'#ffffff',startColor:'#ffffff',endColor:'#e94560',transparentBg:true,bgColor:'#09090b',fade:3,camDist:850,fov:60,depthScale:100,spawn3DMode:2,dir3DSource:2,imgAttr:0,glowEnabled:false,glowIntensity:1,glowRadius:20,glowThreshold:0};
+const defaultSettings={mode:4,seed:1,spawnType:1,count:1000,cutoff:30,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:0,lifetime:100,size:3,speed:2,channel:1,shift:0,fluct:0,dynFluct:0,attrForce:0,attrAngle:0,colorMode:1,customColor:'#ffffff',startColor:'#ffffff',endColor:'#e94560',transparentBg:true,bgColor:'#09090b',fade:3,camDist:850,fov:60,depthScale:100,spawn3DMode:2,dir3DSource:2,imgAttr:0,glowEnabled:false,glowIntensity:1,glowRadius:20,glowThreshold:0};
 let settings={...defaultSettings};
 
 const presets={
@@ -803,11 +808,13 @@ let gl,canvas,program,lineProgram,positionBuffer,colorBuffer,sizeBuffer,uProject
 let glowProgram,compositeProgram,quadBuffer;
 let framebufferA,framebufferB,framebufferMain,textureA,textureB,textureMain;
 const MAX_PARTICLES=200000;
-let particleCount=0,positions=new Float32Array(MAX_PARTICLES*3),colors=new Float32Array(MAX_PARTICLES*4),sizes=new Float32Array(MAX_PARTICLES),velocities=new Float32Array(MAX_PARTICLES*3),lifetimes=new Float32Array(MAX_PARTICLES),maxLifetimes=new Float32Array(MAX_PARTICLES),origPositions=new Float32Array(MAX_PARTICLES*3),particleFluct=new Float32Array(MAX_PARTICLES),particleIds=new Uint32Array(MAX_PARTICLES),particleIdCounter=0,particleSpeeds=new Float32Array(MAX_PARTICLES);
-let trailPositions=new Float32Array(MAX_PARTICLES*20*3),trailColors=new Float32Array(MAX_PARTICLES*20*4),trailCounts=new Uint16Array(MAX_PARTICLES),trailHeads=new Uint16Array(MAX_PARTICLES);
+let particleCount=0,positions=new Float32Array(MAX_PARTICLES*3),colors=new Float32Array(MAX_PARTICLES*4),sizes=new Float32Array(MAX_PARTICLES),velocities=new Float32Array(MAX_PARTICLES*3),lifetimes=new Float32Array(MAX_PARTICLES),maxLifetimes=new Float32Array(MAX_PARTICLES),origPositions=new Float32Array(MAX_PARTICLES*3),particleFluct=new Float32Array(MAX_PARTICLES),particleIds=new Uint32Array(MAX_PARTICLES),particleIdCounter=0,particleSpeeds=new Float32Array(MAX_PARTICLES),particleEdge=new Float32Array(MAX_PARTICLES);
+let trailPositions=new Float32Array(MAX_PARTICLES*20*3),trailColors=new Float32Array(MAX_PARTICLES*20*4),trailSizes=new Float32Array(MAX_PARTICLES*20),trailCounts=new Uint16Array(MAX_PARTICLES),trailHeads=new Uint16Array(MAX_PARTICLES);
 const TRAIL_LENGTH=20;
 let trailRenderPos=new Float32Array(MAX_PARTICLES*20*3),trailRenderCol=new Float32Array(MAX_PARTICLES*20*4),trailRenderSiz=new Float32Array(MAX_PARTICLES*20);
 let sourceData=null,sourceWidth=0,sourceHeight=0,canvasWidth=1280,canvasHeight=720,camRotX=0.3,camRotY=0,isDragging=false,lastMouseX=0,lastMouseY=0,lastPinchDist=0,webcam=null,useWebcam=false,frameCount=0,lastTime=performance.now(),fps=0,hintInteracted=false,brightnessSamples=[],brightnessSamplerReady=false,mediaRecorder=null,recordedChunks=[],updateFrame=0;
+let edgeData=null; // Edge strength map
+let showingEdgeMap=false; // Show edge map on canvas instead of particles
 
 function hash2(a,b){let x=(a*374761393+b*668265263)|0;x=((x>>>16)^x)*0x45d9f3b|0;x=((x>>>16)^x)*0x45d9f3b|0;return(x>>>16)^x;}
 const hashFloat2=(a,b)=>(hash2(a,b)>>>0)/4294967296;
@@ -848,11 +855,224 @@ function initWebGL(){canvas=document.getElementById('glCanvas');canvas.width=can
 
 function getSourcePixel(x,y){if(!sourceData)return{r:128,g:128,b:128};const sx=Math.floor((x/canvasWidth)*sourceWidth),sy=Math.floor(((canvasHeight-y)/canvasHeight)*sourceHeight),idx=(Math.max(0,Math.min(sourceHeight-1,sy))*sourceWidth+Math.max(0,Math.min(sourceWidth-1,sx)))*4;return{r:sourceData[idx],g:sourceData[idx+1],b:sourceData[idx+2]};}
 function getBrightness(x,y){const p=getSourcePixel(x,y);return 0.2126*p.r+0.7152*p.g+0.0722*p.b;}
-function buildBrightnessSampler(){if(!sourceData)return;brightnessSamples=[];const step=Math.max(1,Math.floor(Math.min(sourceWidth,sourceHeight)/128)),thresh=settings.cutoff*2.55;for(let y=0;y<sourceHeight;y+=step)for(let x=0;x<sourceWidth;x+=step){const idx=(y*sourceWidth+x)*4,br=0.2126*sourceData[idx]+0.7152*sourceData[idx+1]+0.0722*sourceData[idx+2];if(br>=thresh)brightnessSamples.push({x:(x/sourceWidth)*canvasWidth,y:(y/sourceHeight)*canvasHeight});}brightnessSamplerReady=brightnessSamples.length>0;}
 
-function spawnParticle(index){const key=settings.seed*100000+frameCount*1000+index,pId=particleIdCounter++;let sx,sy;if(settings.spawnType===2&&brightnessSamplerReady){const s=brightnessSamples[Math.floor(hashFloat2(key,100)*brightnessSamples.length)];sx=s.x;sy=s.y;}else{sx=hashRange(key,1,0,canvasWidth);sy=hashRange(key,2,0,canvasHeight);}const br=getBrightness(sx,sy),x=sx-canvasWidth/2,y=sy-canvasHeight/2;let z=0;if(settings.mode>=4){if(settings.spawn3DMode===2)z=(br/255-0.5)*settings.depthScale*2;else if(settings.spawn3DMode===3)z=hashRange(key,3,-settings.depthScale,settings.depthScale);}const pixel=getSourcePixel(sx,sy),nf=Math.round(settings.fluct*0.708),lf=nf>0?Math.floor(hashFluct(pId,2)*nf/128):0,spd=settings.speed*(0.5+hashFloat2(key,4)*0.5);let vx,vy,vz=0;if(settings.dir3DSource===2&&settings.mode>=4){vx=(pixel.r/127.5-1)*spd;vy=(pixel.g/127.5-1)*spd;vz=(pixel.b/127.5-1)*spd;}else{const ch=settings.channel===1?br:settings.channel===2?pixel.r:settings.channel===3?pixel.g:pixel.b,ang=(ch/255)*Math.PI*2+settings.shift*Math.PI/180+lf*Math.PI/180;vx=Math.cos(ang)*spd;vy=Math.sin(ang)*spd;}const i3=particleCount*3,i4=particleCount*4;positions[i3]=x;positions[i3+1]=y;positions[i3+2]=z;origPositions[i3]=x;origPositions[i3+1]=y;origPositions[i3+2]=z;velocities[i3]=vx;velocities[i3+1]=vy;velocities[i3+2]=vz;particleFluct[particleCount]=lf;particleIds[particleCount]=pId;particleSpeeds[particleCount]=spd;const cm=settings.colorMode;if(cm===1||cm===2){colors[i4]=pixel.r/255;colors[i4+1]=pixel.g/255;colors[i4+2]=pixel.b/255;}else if(cm===3){const c=hexToRgb(settings.customColor);colors[i4]=c.r/255;colors[i4+1]=c.g/255;colors[i4+2]=c.b/255;}else{const c=hexToRgb(settings.startColor);colors[i4]=c.r/255;colors[i4+1]=c.g/255;colors[i4+2]=c.b/255;}colors[i4+3]=1;sizes[particleCount]=settings.size;lifetimes[particleCount]=settings.lifetime;maxLifetimes[particleCount]=settings.lifetime;trailCounts[particleCount]=0;trailHeads[particleCount]=0;particleCount++;}
+// Compute edge strength using Sobel operator
+function computeEdgeMap(){
+  if(!sourceData)return;
+  const w=sourceWidth,h=sourceHeight;
+  const method=settings.edgeMethod||1;
+  
+  // Compute grayscale
+  const gray=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++){
+    const idx=i*4;
+    gray[i]=0.2126*sourceData[idx]+0.7152*sourceData[idx+1]+0.0722*sourceData[idx+2];
+  }
+  
+  // Gaussian blur helper
+  function gaussianBlur(src,r){
+    const dst=new Float32Array(w*h);
+    const kernel=[];
+    let sum=0;
+    for(let i=-r;i<=r;i++){
+      const v=Math.exp(-(i*i)/(2*r*r/9));
+      kernel.push(v);
+      sum+=v;
+    }
+    for(let i=0;i<kernel.length;i++)kernel[i]/=sum;
+    // Horizontal pass
+    const tmp=new Float32Array(w*h);
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        let v=0;
+        for(let k=-r;k<=r;k++){
+          const xx=Math.max(0,Math.min(w-1,x+k));
+          v+=src[y*w+xx]*kernel[k+r];
+        }
+        tmp[y*w+x]=v;
+      }
+    }
+    // Vertical pass
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        let v=0;
+        for(let k=-r;k<=r;k++){
+          const yy=Math.max(0,Math.min(h-1,y+k));
+          v+=tmp[yy*w+x]*kernel[k+r];
+        }
+        dst[y*w+x]=v;
+      }
+    }
+    return dst;
+  }
+  
+  // Sobel helper
+  function sobel(src){
+    const mag=new Float32Array(w*h);
+    const dir=new Float32Array(w*h);
+    let maxMag=0;
+    for(let y=1;y<h-1;y++){
+      for(let x=1;x<w-1;x++){
+        const idx=y*w+x;
+        const gx=-src[(y-1)*w+(x-1)]+src[(y-1)*w+(x+1)]
+                 -2*src[y*w+(x-1)]+2*src[y*w+(x+1)]
+                 -src[(y+1)*w+(x-1)]+src[(y+1)*w+(x+1)];
+        const gy=-src[(y-1)*w+(x-1)]-2*src[(y-1)*w+x]-src[(y-1)*w+(x+1)]
+                 +src[(y+1)*w+(x-1)]+2*src[(y+1)*w+x]+src[(y+1)*w+(x+1)];
+        const m=Math.sqrt(gx*gx+gy*gy);
+        mag[idx]=m;
+        dir[idx]=Math.atan2(gy,gx);
+        if(m>maxMag)maxMag=m;
+      }
+    }
+    return{mag,dir,maxMag};
+  }
+  
+  edgeData=new Float32Array(w*h);
+  
+  if(method===1){
+    // Method 1: Sobel smooth (normalized gradients)
+    const{mag,maxMag}=sobel(gray);
+    if(maxMag>0){
+      for(let i=0;i<w*h;i++)edgeData[i]=mag[i]/maxMag;
+    }
+  }
+  else if(method===2){
+    // Method 2: Gaussian blur + Sobel (good for noisy webcam)
+    const blurRadius=Math.max(2,Math.floor(Math.min(w,h)/100));
+    const blurred=gaussianBlur(gray,blurRadius);
+    const{mag,maxMag}=sobel(blurred);
+    if(maxMag>0){
+      for(let i=0;i<w*h;i++)edgeData[i]=mag[i]/maxMag;
+    }
+  }
+  else if(method===3){
+    // Method 3: Canny (NMS + hysteresis)
+    const blurred=gaussianBlur(gray,2);
+    const{mag,dir,maxMag}=sobel(blurred);
+    const highThresh=maxMag*0.2;
+    const lowThresh=maxMag*0.08;
+    // Non-maximum suppression
+    const nms=new Float32Array(w*h);
+    for(let y=1;y<h-1;y++){
+      for(let x=1;x<w-1;x++){
+        const idx=y*w+x;
+        const m=mag[idx];
+        if(m<lowThresh)continue;
+        const angle=dir[idx];
+        let dx=0,dy=0;
+        if(angle>=-Math.PI/8&&angle<Math.PI/8||angle>=7*Math.PI/8||angle<-7*Math.PI/8){dx=1;}
+        else if(angle>=Math.PI/8&&angle<3*Math.PI/8||angle>=-7*Math.PI/8&&angle<-5*Math.PI/8){dx=1;dy=1;}
+        else if(angle>=3*Math.PI/8&&angle<5*Math.PI/8||angle>=-5*Math.PI/8&&angle<-3*Math.PI/8){dy=1;}
+        else{dx=-1;dy=1;}
+        const m1=mag[(y+dy)*w+(x+dx)]||0;
+        const m2=mag[(y-dy)*w+(x-dx)]||0;
+        if(m>=m1&&m>=m2)nms[idx]=m;
+      }
+    }
+    // Hysteresis - connect weak edges to strong
+    const strong=new Uint8Array(w*h);
+    for(let i=0;i<w*h;i++)if(nms[i]>=highThresh)strong[i]=1;
+    let changed=true;
+    while(changed){
+      changed=false;
+      for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+          const idx=y*w+x;
+          if(strong[idx]||nms[idx]<lowThresh)continue;
+          for(let dy=-1;dy<=1;dy++){
+            for(let dx=-1;dx<=1;dx++){
+              if(strong[(y+dy)*w+(x+dx)]){strong[idx]=1;changed=true;break;}
+            }
+            if(strong[idx])break;
+          }
+        }
+      }
+    }
+    for(let i=0;i<w*h;i++)edgeData[i]=strong[i]?1:0;
+  }
+  else if(method===4){
+    // Method 4: Adaptive threshold
+    const{mag}=sobel(gray);
+    const radius=Math.max(3,Math.floor(Math.min(w,h)/50));
+    // Integral image
+    const integral=new Float32Array((w+1)*(h+1));
+    for(let y=0;y<h;y++){
+      let rowSum=0;
+      for(let x=0;x<w;x++){
+        rowSum+=mag[y*w+x];
+        integral[(y+1)*(w+1)+(x+1)]=integral[y*(w+1)+(x+1)]+rowSum;
+      }
+    }
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const idx=y*w+x;
+        const val=mag[idx];
+        const x1=Math.max(0,x-radius),y1=Math.max(0,y-radius);
+        const x2=Math.min(w-1,x+radius),y2=Math.min(h-1,y+radius);
+        const area=(x2-x1+1)*(y2-y1+1);
+        const sum=integral[(y2+1)*(w+1)+(x2+1)]-integral[y1*(w+1)+(x2+1)]
+                 -integral[(y2+1)*(w+1)+x1]+integral[y1*(w+1)+x1];
+        const localMean=sum/area;
+        edgeData[idx]=val>localMean&&val>15?1:0;
+      }
+    }
+  }
+}
 
-function updateParticles(){let wi=0;const ar=settings.attrAngle*Math.PI/180,ac=Math.cos(ar),as=Math.sin(ar);let g1=null,g2=null;if(settings.colorMode>=4){g1=hexToRgb(settings.startColor);g2=hexToRgb(settings.endColor);}updateFrame++;const updateTrails=(settings.mode===5||settings.mode===3);for(let i=0;i<particleCount;i++){const i3=i*3,i4=i*4;if(--lifetimes[i]<=0)continue;const cx=positions[i3]+canvasWidth/2,cy=positions[i3+1]+canvasHeight/2,spd=particleSpeeds[i];if(settings.dir3DSource===2&&settings.mode>=4){const p=getSourcePixel(cx,cy);velocities[i3]=(p.r/127.5-1)*spd;velocities[i3+1]=(p.g/127.5-1)*spd;velocities[i3+2]=(p.b/127.5-1)*spd;}else{const p=getSourcePixel(cx,cy),br=0.2126*p.r+0.7152*p.g+0.0722*p.b,ch=settings.channel===1?br:settings.channel===2?p.r:settings.channel===3?p.g:p.b;let df=0;if(settings.dynFluct>0)df=Math.floor(hashFluct(particleIds[i]*10000+(maxLifetimes[i]-lifetimes[i]),3)*Math.round(settings.dynFluct*0.708)/128);const ang=(ch/255)*Math.PI*2+settings.shift*Math.PI/180+particleFluct[i]*Math.PI/180+df*Math.PI/180;velocities[i3]=Math.cos(ang)*spd;velocities[i3+1]=Math.sin(ang)*spd;}if(settings.attrForce!==0){velocities[i3]+=ac*settings.attrForce*0.1;velocities[i3+1]+=as*settings.attrForce*0.1;}if(settings.imgAttr>0&&settings.mode>=4){const s=settings.imgAttr*0.001;velocities[i3]+=(origPositions[i3]-positions[i3])*s;velocities[i3+1]+=(origPositions[i3+1]-positions[i3+1])*s;velocities[i3+2]+=(origPositions[i3+2]-positions[i3+2])*s;}if(updateTrails){const tb=i*TRAIL_LENGTH;const head=trailHeads[i];const ti=tb+head;trailPositions[ti*3]=positions[i3];trailPositions[ti*3+1]=positions[i3+1];trailPositions[ti*3+2]=positions[i3+2];trailColors[ti*4]=colors[i4];trailColors[ti*4+1]=colors[i4+1];trailColors[ti*4+2]=colors[i4+2];trailColors[ti*4+3]=1;trailHeads[i]=(head+1)%TRAIL_LENGTH;if(trailCounts[i]<TRAIL_LENGTH)trailCounts[i]++;}positions[i3]+=velocities[i3];positions[i3+1]+=velocities[i3+1];positions[i3+2]+=velocities[i3+2];const hw=canvasWidth/2*1.5,hh=canvasHeight/2*1.5,md=settings.depthScale*2;if(Math.abs(positions[i3])>hw||Math.abs(positions[i3+1])>hh||Math.abs(positions[i3+2])>md)continue;const lr=lifetimes[i]/maxLifetimes[i];colors[i4+3]=lr;if(settings.colorMode===2){const p=getSourcePixel(cx,cy);colors[i4]=p.r/255;colors[i4+1]=p.g/255;colors[i4+2]=p.b/255;}else if(settings.colorMode===4){const t=1-lr;colors[i4]=(g1.r+(g2.r-g1.r)*t)/255;colors[i4+1]=(g1.g+(g2.g-g1.g)*t)/255;colors[i4+2]=(g1.b+(g2.b-g1.b)*t)/255;}else if(settings.colorMode===5){const t=Math.max(0,Math.min(1,(positions[i3+2]+settings.depthScale)/(settings.depthScale*2)));colors[i4]=(g1.r+(g2.r-g1.r)*t)/255;colors[i4+1]=(g1.g+(g2.g-g1.g)*t)/255;colors[i4+2]=(g1.b+(g2.b-g1.b)*t)/255;}if(wi!==i){const w3=wi*3,w4=wi*4;positions[w3]=positions[i3];positions[w3+1]=positions[i3+1];positions[w3+2]=positions[i3+2];origPositions[w3]=origPositions[i3];origPositions[w3+1]=origPositions[i3+1];origPositions[w3+2]=origPositions[i3+2];velocities[w3]=velocities[i3];velocities[w3+1]=velocities[i3+1];velocities[w3+2]=velocities[i3+2];colors[w4]=colors[i4];colors[w4+1]=colors[i4+1];colors[w4+2]=colors[i4+2];colors[w4+3]=colors[i4+3];sizes[wi]=sizes[i];lifetimes[wi]=lifetimes[i];maxLifetimes[wi]=maxLifetimes[i];particleFluct[wi]=particleFluct[i];particleIds[wi]=particleIds[i];particleSpeeds[wi]=particleSpeeds[i];const stb=i*TRAIL_LENGTH,dtb=wi*TRAIL_LENGTH;for(let t=0;t<TRAIL_LENGTH;t++){trailPositions[(dtb+t)*3]=trailPositions[(stb+t)*3];trailPositions[(dtb+t)*3+1]=trailPositions[(stb+t)*3+1];trailPositions[(dtb+t)*3+2]=trailPositions[(stb+t)*3+2];trailColors[(dtb+t)*4]=trailColors[(stb+t)*4];trailColors[(dtb+t)*4+1]=trailColors[(stb+t)*4+1];trailColors[(dtb+t)*4+2]=trailColors[(stb+t)*4+2];trailColors[(dtb+t)*4+3]=trailColors[(stb+t)*4+3];}trailCounts[wi]=trailCounts[i];trailHeads[wi]=trailHeads[i];}wi++;}particleCount=wi;}
+function getEdgeStrength(x,y){
+  if(!edgeData)return 0;
+  const sx=Math.floor((x/canvasWidth)*sourceWidth);
+  const sy=Math.floor(((canvasHeight-y)/canvasHeight)*sourceHeight);
+  const idx=Math.max(0,Math.min(sourceHeight-1,sy))*sourceWidth+Math.max(0,Math.min(sourceWidth-1,sx));
+  return edgeData[idx]||0;
+}
+
+function getEdgeGradient(x,y){
+  if(!edgeData)return{gx:0,gy:0};
+  const step=2;
+  const e0=getEdgeStrength(x,y);
+  const eR=getEdgeStrength(x+step,y);
+  const eL=getEdgeStrength(x-step,y);
+  const eU=getEdgeStrength(x,y-step);
+  const eD=getEdgeStrength(x,y+step);
+  let gx=(eR-eL)*0.5;
+  let gy=(eD-eU)*0.5;
+  const len=Math.sqrt(gx*gx+gy*gy);
+  if(len>0.001){gx/=len;gy/=len;}
+  return{gx,gy,strength:e0};
+}
+
+function buildBrightnessSampler(){
+  if(!sourceData)return;
+  brightnessSamples=[];
+  const step=Math.max(1,Math.floor(Math.min(sourceWidth,sourceHeight)/128));
+  const thresh=settings.cutoff*2.55;
+  
+  for(let y=0;y<sourceHeight;y+=step){
+    for(let x=0;x<sourceWidth;x+=step){
+      const idx=(y*sourceWidth+x)*4;
+      const br=0.2126*sourceData[idx]+0.7152*sourceData[idx+1]+0.0722*sourceData[idx+2];
+      if(br>=thresh){
+        brightnessSamples.push({
+          x:(x/sourceWidth)*canvasWidth,
+          y:(y/sourceHeight)*canvasHeight
+        });
+      }
+    }
+  }
+  brightnessSamplerReady=brightnessSamples.length>0;
+}
+
+function spawnParticle(index){const key=settings.seed*100000+frameCount*1000+index,pId=particleIdCounter++;let sx,sy;if(settings.spawnType===2&&brightnessSamplerReady){const s=brightnessSamples[Math.floor(hashFloat2(key,100)*brightnessSamples.length)];sx=s.x;sy=s.y;}else{sx=hashRange(key,1,0,canvasWidth);sy=hashRange(key,2,0,canvasHeight);}const br=getBrightness(sx,sy),x=sx-canvasWidth/2,y=sy-canvasHeight/2;let z=0;if(settings.mode>=4){if(settings.spawn3DMode===2)z=(br/255-0.5)*settings.depthScale*2;else if(settings.spawn3DMode===3)z=hashRange(key,3,-settings.depthScale,settings.depthScale);}const pixel=getSourcePixel(sx,sy),nf=Math.round(settings.fluct*0.708),lf=nf>0?Math.floor(hashFluct(pId,2)*nf/128):0,spd=settings.speed*(0.5+hashFloat2(key,4)*0.5);let vx,vy,vz=0;if(settings.dir3DSource===2&&settings.mode>=4){vx=(pixel.r/127.5-1)*spd;vy=(pixel.g/127.5-1)*spd;vz=(pixel.b/127.5-1)*spd;}else{const ch=settings.channel===1?br:settings.channel===2?pixel.r:settings.channel===3?pixel.g:pixel.b,ang=(ch/255)*Math.PI*2+settings.shift*Math.PI/180+lf*Math.PI/180;vx=Math.cos(ang)*spd;vy=Math.sin(ang)*spd;}const i3=particleCount*3,i4=particleCount*4;positions[i3]=x;positions[i3+1]=y;positions[i3+2]=z;origPositions[i3]=x;origPositions[i3+1]=y;origPositions[i3+2]=z;velocities[i3]=vx;velocities[i3+1]=vy;velocities[i3+2]=vz;particleFluct[particleCount]=lf;particleIds[particleCount]=pId;particleSpeeds[particleCount]=spd;
+// Store edge strength for this particle
+const edge=getEdgeStrength(sx,sy);
+particleEdge[particleCount]=edge;
+const cm=settings.colorMode;if(cm===1||cm===2){colors[i4]=pixel.r/255;colors[i4+1]=pixel.g/255;colors[i4+2]=pixel.b/255;}else if(cm===3){const c=hexToRgb(settings.customColor);colors[i4]=c.r/255;colors[i4+1]=c.g/255;colors[i4+2]=c.b/255;}else{const c=hexToRgb(settings.startColor);colors[i4]=c.r/255;colors[i4+1]=c.g/255;colors[i4+2]=c.b/255;}colors[i4+3]=1;
+sizes[particleCount]=settings.size;
+lifetimes[particleCount]=settings.lifetime;maxLifetimes[particleCount]=settings.lifetime;trailCounts[particleCount]=0;trailHeads[particleCount]=0;particleCount++;}
+
+function updateParticles(){let wi=0;const ar=settings.attrAngle*Math.PI/180,ac=Math.cos(ar),as=Math.sin(ar);let g1=null,g2=null;if(settings.colorMode>=4){g1=hexToRgb(settings.startColor);g2=hexToRgb(settings.endColor);}updateFrame++;const updateTrails=(settings.mode===5||settings.mode===3);const edgeOpacityMult=settings.edgeOpacity/100;const edgeSizeMult=settings.edgeSize/100;for(let i=0;i<particleCount;i++){const i3=i*3,i4=i*4;if(--lifetimes[i]<=0)continue;const cx=positions[i3]+canvasWidth/2,cy=positions[i3+1]+canvasHeight/2,spd=particleSpeeds[i];if(settings.dir3DSource===2&&settings.mode>=4){const p=getSourcePixel(cx,cy);velocities[i3]=(p.r/127.5-1)*spd;velocities[i3+1]=(p.g/127.5-1)*spd;velocities[i3+2]=(p.b/127.5-1)*spd;}else{const p=getSourcePixel(cx,cy),br=0.2126*p.r+0.7152*p.g+0.0722*p.b,ch=settings.channel===1?br:settings.channel===2?p.r:settings.channel===3?p.g:p.b;let df=0;if(settings.dynFluct>0)df=Math.floor(hashFluct(particleIds[i]*10000+(maxLifetimes[i]-lifetimes[i]),3)*Math.round(settings.dynFluct*0.708)/128);const ang=(ch/255)*Math.PI*2+settings.shift*Math.PI/180+particleFluct[i]*Math.PI/180+df*Math.PI/180;velocities[i3]=Math.cos(ang)*spd;velocities[i3+1]=Math.sin(ang)*spd;}if(settings.attrForce!==0){velocities[i3]+=ac*settings.attrForce*0.1;velocities[i3+1]+=as*settings.attrForce*0.1;}if(settings.edgeAttr>0){const eg=getEdgeGradient(cx,cy);const ef=settings.edgeAttr*0.05;velocities[i3]+=eg.gx*ef;velocities[i3+1]-=eg.gy*ef;}if(settings.imgAttr>0&&settings.mode>=4){const s=settings.imgAttr*0.001;velocities[i3]+=(origPositions[i3]-positions[i3])*s;velocities[i3+1]+=(origPositions[i3+1]-positions[i3+1])*s;velocities[i3+2]+=(origPositions[i3+2]-positions[i3+2])*s;}const edge=getEdgeStrength(cx,cy);const edgeAlpha=edgeOpacityMult>0?(0.02+edge*0.98)*edgeOpacityMult+(1-edgeOpacityMult):1;const edgeSize=settings.size*(1+edge*edgeSizeMult*7);if(updateTrails){const tb=i*TRAIL_LENGTH;const head=trailHeads[i];const ti=tb+head;trailPositions[ti*3]=positions[i3];trailPositions[ti*3+1]=positions[i3+1];trailPositions[ti*3+2]=positions[i3+2];trailColors[ti*4]=colors[i4];trailColors[ti*4+1]=colors[i4+1];trailColors[ti*4+2]=colors[i4+2];trailColors[ti*4+3]=edgeAlpha;trailSizes[ti]=edgeSize;trailHeads[i]=(head+1)%TRAIL_LENGTH;if(trailCounts[i]<TRAIL_LENGTH)trailCounts[i]++;}positions[i3]+=velocities[i3];positions[i3+1]+=velocities[i3+1];positions[i3+2]+=velocities[i3+2];const hw=canvasWidth/2*1.5,hh=canvasHeight/2*1.5,md=settings.depthScale*2;if(Math.abs(positions[i3])>hw||Math.abs(positions[i3+1])>hh||Math.abs(positions[i3+2])>md)continue;const lr=lifetimes[i]/maxLifetimes[i];colors[i4+3]=lr*edgeAlpha;sizes[i]=edgeSize;if(settings.colorMode===2){const p=getSourcePixel(cx,cy);colors[i4]=p.r/255;colors[i4+1]=p.g/255;colors[i4+2]=p.b/255;}else if(settings.colorMode===4){const t=1-lr;colors[i4]=(g1.r+(g2.r-g1.r)*t)/255;colors[i4+1]=(g1.g+(g2.g-g1.g)*t)/255;colors[i4+2]=(g1.b+(g2.b-g1.b)*t)/255;}else if(settings.colorMode===5){const t=Math.max(0,Math.min(1,(positions[i3+2]+settings.depthScale)/(settings.depthScale*2)));colors[i4]=(g1.r+(g2.r-g1.r)*t)/255;colors[i4+1]=(g1.g+(g2.g-g1.g)*t)/255;colors[i4+2]=(g1.b+(g2.b-g1.b)*t)/255;}if(wi!==i){const w3=wi*3,w4=wi*4;positions[w3]=positions[i3];positions[w3+1]=positions[i3+1];positions[w3+2]=positions[i3+2];origPositions[w3]=origPositions[i3];origPositions[w3+1]=origPositions[i3+1];origPositions[w3+2]=origPositions[i3+2];velocities[w3]=velocities[i3];velocities[w3+1]=velocities[i3+1];velocities[w3+2]=velocities[i3+2];colors[w4]=colors[i4];colors[w4+1]=colors[i4+1];colors[w4+2]=colors[i4+2];colors[w4+3]=colors[i4+3];sizes[wi]=sizes[i];lifetimes[wi]=lifetimes[i];maxLifetimes[wi]=maxLifetimes[i];particleFluct[wi]=particleFluct[i];particleIds[wi]=particleIds[i];particleSpeeds[wi]=particleSpeeds[i];particleEdge[wi]=particleEdge[i];const stb=i*TRAIL_LENGTH,dtb=wi*TRAIL_LENGTH;for(let t=0;t<TRAIL_LENGTH;t++){trailPositions[(dtb+t)*3]=trailPositions[(stb+t)*3];trailPositions[(dtb+t)*3+1]=trailPositions[(stb+t)*3+1];trailPositions[(dtb+t)*3+2]=trailPositions[(stb+t)*3+2];trailColors[(dtb+t)*4]=trailColors[(stb+t)*4];trailColors[(dtb+t)*4+1]=trailColors[(stb+t)*4+1];trailColors[(dtb+t)*4+2]=trailColors[(stb+t)*4+2];trailColors[(dtb+t)*4+3]=trailColors[(stb+t)*4+3];trailSizes[dtb+t]=trailSizes[stb+t];}trailCounts[wi]=trailCounts[i];trailHeads[wi]=trailHeads[i];}wi++;}particleCount=wi;}
 
 function renderParticles(toFramebuffer){const bg=hexToRgb(settings.bgColor);if(toFramebuffer){gl.bindFramebuffer(gl.FRAMEBUFFER,framebufferMain);gl.viewport(0,0,canvasWidth,canvasHeight);}gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.clearColor(settings.transparentBg?0:bg.r/255,settings.transparentBg?0:bg.g/255,settings.transparentBg?0:bg.b/255,settings.transparentBg?0:(settings.mode===3||settings.mode===5)&&settings.fade>0?settings.fade/255:1);gl.clear(gl.COLOR_BUFFER_BIT);if(particleCount===0)return;gl.useProgram(program);let proj,view;if(settings.mode>=4){proj=perspectiveMatrix(settings.fov,canvasWidth/canvasHeight,1,5000);view=viewMatrix(camRotX,camRotY,settings.camDist);}else{proj=orthoMatrix(-canvasWidth/2,canvasWidth/2,-canvasHeight/2,canvasHeight/2,-1000,1000);view=identityMatrix();}gl.uniformMatrix4fv(uProjection,false,proj);gl.uniformMatrix4fv(uView,false,view);gl.uniform2f(uResolution,canvasWidth,canvasHeight);gl.uniform1f(uIs3D,settings.mode>=4?1:0);if(settings.mode!==3){const aPos=gl.getAttribLocation(program,'aPosition'),aCol=gl.getAttribLocation(program,'aColor'),aSiz=gl.getAttribLocation(program,'aSize');gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,positions.subarray(0,particleCount*3),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,colors.subarray(0,particleCount*4),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aCol);gl.vertexAttribPointer(aCol,4,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,sizeBuffer);gl.bufferData(gl.ARRAY_BUFFER,sizes.subarray(0,particleCount),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aSiz);gl.vertexAttribPointer(aSiz,1,gl.FLOAT,false,0,0);gl.drawArrays(gl.POINTS,0,particleCount);}if(settings.mode===3||settings.mode===5)renderTrails(proj,view);if(toFramebuffer)gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
 
@@ -862,26 +1082,96 @@ function compositeGlow(){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0
 
 function render(){if(settings.glowEnabled&&particleCount>0){renderParticles(true);applyGlow();compositeGlow();}else{renderParticles(false);}}
 
-function renderTrails(proj,view){if(particleCount===0||!lineProgram)return;let segCount=0;for(let i=0;i<particleCount;i++){const c=trailCounts[i];if(c>1)segCount+=c-1;}if(segCount===0)return;const vertCount=segCount*6;const triPos=new Float32Array(vertCount*3);const triCol=new Float32Array(vertCount*4);let vi=0;const thickness=settings.size*0.25;for(let i=0;i<particleCount;i++){const c=trailCounts[i];if(c<2)continue;const tb=i*TRAIL_LENGTH;const head=trailHeads[i];for(let j=0;j<c-1;j++){const idx1=tb+((head-c+j+TRAIL_LENGTH)%TRAIL_LENGTH);const idx2=tb+((head-c+j+1+TRAIL_LENGTH)%TRAIL_LENGTH);const x1=trailPositions[idx1*3],y1=trailPositions[idx1*3+1],z1=trailPositions[idx1*3+2];const x2=trailPositions[idx2*3],y2=trailPositions[idx2*3+1],z2=trailPositions[idx2*3+2];const dx=x2-x1,dy=y2-y1;const len=Math.sqrt(dx*dx+dy*dy)||1;const nx=-dy/len*thickness,ny=dx/len*thickness;const alpha1=((j+1)/c)*0.9;const alpha2=((j+2)/c)*0.9;const r1=trailColors[idx1*4],g1=trailColors[idx1*4+1],b1=trailColors[idx1*4+2];const r2=trailColors[idx2*4],g2=trailColors[idx2*4+1],b2=trailColors[idx2*4+2];triPos[vi*3]=x1+nx;triPos[vi*3+1]=y1+ny;triPos[vi*3+2]=z1;triCol[vi*4]=r1;triCol[vi*4+1]=g1;triCol[vi*4+2]=b1;triCol[vi*4+3]=alpha1;vi++;triPos[vi*3]=x1-nx;triPos[vi*3+1]=y1-ny;triPos[vi*3+2]=z1;triCol[vi*4]=r1;triCol[vi*4+1]=g1;triCol[vi*4+2]=b1;triCol[vi*4+3]=alpha1;vi++;triPos[vi*3]=x2+nx;triPos[vi*3+1]=y2+ny;triPos[vi*3+2]=z2;triCol[vi*4]=r2;triCol[vi*4+1]=g2;triCol[vi*4+2]=b2;triCol[vi*4+3]=alpha2;vi++;triPos[vi*3]=x2+nx;triPos[vi*3+1]=y2+ny;triPos[vi*3+2]=z2;triCol[vi*4]=r2;triCol[vi*4+1]=g2;triCol[vi*4+2]=b2;triCol[vi*4+3]=alpha2;vi++;triPos[vi*3]=x1-nx;triPos[vi*3+1]=y1-ny;triPos[vi*3+2]=z1;triCol[vi*4]=r1;triCol[vi*4+1]=g1;triCol[vi*4+2]=b1;triCol[vi*4+3]=alpha1;vi++;triPos[vi*3]=x2-nx;triPos[vi*3+1]=y2-ny;triPos[vi*3+2]=z2;triCol[vi*4]=r2;triCol[vi*4+1]=g2;triCol[vi*4+2]=b2;triCol[vi*4+3]=alpha2;vi++;}}gl.useProgram(lineProgram);const uProj=gl.getUniformLocation(lineProgram,'uProjection');const uV=gl.getUniformLocation(lineProgram,'uView');gl.uniformMatrix4fv(uProj,false,proj);gl.uniformMatrix4fv(uV,false,view);const aPos=gl.getAttribLocation(lineProgram,'aPosition');const aCol=gl.getAttribLocation(lineProgram,'aColor');gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,triPos,gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,triCol,gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aCol);gl.vertexAttribPointer(aCol,4,gl.FLOAT,false,0,0);gl.drawArrays(gl.TRIANGLES,0,vi);gl.useProgram(program);}
+function renderTrails(proj,view){if(particleCount===0||!lineProgram)return;let segCount=0;for(let i=0;i<particleCount;i++){const c=trailCounts[i];if(c>1)segCount+=c-1;}if(segCount===0)return;const vertCount=segCount*6;const triPos=new Float32Array(vertCount*3);const triCol=new Float32Array(vertCount*4);let vi=0;for(let i=0;i<particleCount;i++){const c=trailCounts[i];if(c<2)continue;const tb=i*TRAIL_LENGTH;const head=trailHeads[i];for(let j=0;j<c-1;j++){const idx1=tb+((head-c+j+TRAIL_LENGTH)%TRAIL_LENGTH);const idx2=tb+((head-c+j+1+TRAIL_LENGTH)%TRAIL_LENGTH);const x1=trailPositions[idx1*3],y1=trailPositions[idx1*3+1],z1=trailPositions[idx1*3+2];const x2=trailPositions[idx2*3],y2=trailPositions[idx2*3+1],z2=trailPositions[idx2*3+2];const dx=x2-x1,dy=y2-y1;const len=Math.sqrt(dx*dx+dy*dy)||1;const thickness1=trailSizes[idx1]*0.25;const thickness2=trailSizes[idx2]*0.25;const nx1=-dy/len*thickness1,ny1=dx/len*thickness1;const nx2=-dy/len*thickness2,ny2=dx/len*thickness2;const fadePos1=((j+1)/c)*0.9;const fadePos2=((j+2)/c)*0.9;const alpha1=trailColors[idx1*4+3]*fadePos1;const alpha2=trailColors[idx2*4+3]*fadePos2;const r1=trailColors[idx1*4],g1=trailColors[idx1*4+1],b1=trailColors[idx1*4+2];const r2=trailColors[idx2*4],g2=trailColors[idx2*4+1],b2=trailColors[idx2*4+2];triPos[vi*3]=x1+nx1;triPos[vi*3+1]=y1+ny1;triPos[vi*3+2]=z1;triCol[vi*4]=r1;triCol[vi*4+1]=g1;triCol[vi*4+2]=b1;triCol[vi*4+3]=alpha1;vi++;triPos[vi*3]=x1-nx1;triPos[vi*3+1]=y1-ny1;triPos[vi*3+2]=z1;triCol[vi*4]=r1;triCol[vi*4+1]=g1;triCol[vi*4+2]=b1;triCol[vi*4+3]=alpha1;vi++;triPos[vi*3]=x2+nx2;triPos[vi*3+1]=y2+ny2;triPos[vi*3+2]=z2;triCol[vi*4]=r2;triCol[vi*4+1]=g2;triCol[vi*4+2]=b2;triCol[vi*4+3]=alpha2;vi++;triPos[vi*3]=x2+nx2;triPos[vi*3+1]=y2+ny2;triPos[vi*3+2]=z2;triCol[vi*4]=r2;triCol[vi*4+1]=g2;triCol[vi*4+2]=b2;triCol[vi*4+3]=alpha2;vi++;triPos[vi*3]=x1-nx1;triPos[vi*3+1]=y1-ny1;triPos[vi*3+2]=z1;triCol[vi*4]=r1;triCol[vi*4+1]=g1;triCol[vi*4+2]=b1;triCol[vi*4+3]=alpha1;vi++;triPos[vi*3]=x2-nx2;triPos[vi*3+1]=y2-ny2;triPos[vi*3+2]=z2;triCol[vi*4]=r2;triCol[vi*4+1]=g2;triCol[vi*4+2]=b2;triCol[vi*4+3]=alpha2;vi++;}}gl.useProgram(lineProgram);const uProj=gl.getUniformLocation(lineProgram,'uProjection');const uV=gl.getUniformLocation(lineProgram,'uView');gl.uniformMatrix4fv(uProj,false,proj);gl.uniformMatrix4fv(uV,false,view);const aPos=gl.getAttribLocation(lineProgram,'aPosition');const aCol=gl.getAttribLocation(lineProgram,'aColor');gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,triPos,gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,triCol,gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aCol);gl.vertexAttribPointer(aCol,4,gl.FLOAT,false,0,0);gl.drawArrays(gl.TRIANGLES,0,vi);gl.useProgram(program);}
 
-function renderStaticTrailsCore(toFramebuffer){const bg=hexToRgb(settings.bgColor);if(toFramebuffer){gl.bindFramebuffer(gl.FRAMEBUFFER,framebufferMain);gl.viewport(0,0,canvasWidth,canvasHeight);}gl.clearColor(settings.transparentBg?0:bg.r/255,settings.transparentBg?0:bg.g/255,settings.transparentBg?0:bg.b/255,settings.transparentBg?0:1);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(program);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniformMatrix4fv(uProjection,false,orthoMatrix(-canvasWidth/2,canvasWidth/2,-canvasHeight/2,canvasHeight/2,-1000,1000));gl.uniformMatrix4fv(uView,false,identityMatrix());gl.uniform2f(uResolution,canvasWidth,canvasHeight);gl.uniform1f(uIs3D,0);const ar=settings.attrAngle*Math.PI/180,ac=Math.cos(ar),as=Math.sin(ar),g1=hexToRgb(settings.startColor),g2=hexToRgb(settings.endColor),cc=hexToRgb(settings.customColor),maxSteps=Math.floor(settings.lifetime*settings.speed),total=settings.count*maxSteps,tPos=new Float32Array(total*3),tCol=new Float32Array(total*4),tSiz=new Float32Array(total);let pi=0;for(let i=0;i<settings.count;i++){const key=settings.seed*10000+i;let sx,sy;if(settings.spawnType===2&&brightnessSamplerReady){const s=brightnessSamples[Math.floor(hashFloat2(key,100)*brightnessSamples.length)];sx=s.x;sy=s.y;}else{sx=hashRange(key,1,0,canvasWidth);sy=hashRange(key,2,0,canvasHeight);}let x=sx-canvasWidth/2,y=sy-canvasHeight/2;const sp=getSourcePixel(sx,sy),spd=settings.speed*(0.5+hashFloat2(key,3)*0.5),nf=Math.round(settings.fluct*0.708),lf=nf>0?Math.floor(hashFluct(key,2)*nf/128):0;for(let step=0;step<maxSteps;step++){const cx=x+canvasWidth/2,cy=y+canvasHeight/2;if(cx<0||cx>=canvasWidth||cy<0||cy>=canvasHeight)break;const p=getSourcePixel(cx,cy),br=0.2126*p.r+0.7152*p.g+0.0722*p.b,ch=settings.channel===1?br:settings.channel===2?p.r:settings.channel===3?p.g:p.b;let df=0;if(settings.dynFluct>0)df=Math.floor(hashFluct(key*10000+step,3)*Math.round(settings.dynFluct*0.708)/128);const ang=(ch/255)*Math.PI*2+settings.shift*Math.PI/180+lf*Math.PI/180+df*Math.PI/180;tPos[pi*3]=x;tPos[pi*3+1]=y;tPos[pi*3+2]=0;const t=step/maxSteps;if(settings.colorMode===1){tCol[pi*4]=sp.r/255;tCol[pi*4+1]=sp.g/255;tCol[pi*4+2]=sp.b/255;}else if(settings.colorMode===2){tCol[pi*4]=p.r/255;tCol[pi*4+1]=p.g/255;tCol[pi*4+2]=p.b/255;}else if(settings.colorMode===4){tCol[pi*4]=(g1.r+(g2.r-g1.r)*t)/255;tCol[pi*4+1]=(g1.g+(g2.g-g1.g)*t)/255;tCol[pi*4+2]=(g1.b+(g2.b-g1.b)*t)/255;}else{tCol[pi*4]=cc.r/255;tCol[pi*4+1]=cc.g/255;tCol[pi*4+2]=cc.b/255;}tCol[pi*4+3]=1-t;tSiz[pi]=settings.size;pi++;let vx=Math.cos(ang)*spd,vy=Math.sin(ang)*spd;if(settings.attrForce!==0){vx+=ac*settings.attrForce*0.1;vy+=as*settings.attrForce*0.1;}x+=vx;y+=vy;}}const aPos=gl.getAttribLocation(program,'aPosition'),aCol=gl.getAttribLocation(program,'aColor'),aSiz=gl.getAttribLocation(program,'aSize');gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,tPos.subarray(0,pi*3),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,tCol.subarray(0,pi*4),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aCol);gl.vertexAttribPointer(aCol,4,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,sizeBuffer);gl.bufferData(gl.ARRAY_BUFFER,tSiz.subarray(0,pi),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aSiz);gl.vertexAttribPointer(aSiz,1,gl.FLOAT,false,0,0);gl.drawArrays(gl.POINTS,0,pi);if(toFramebuffer)gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
+function renderStaticTrailsCore(toFramebuffer){const bg=hexToRgb(settings.bgColor);if(toFramebuffer){gl.bindFramebuffer(gl.FRAMEBUFFER,framebufferMain);gl.viewport(0,0,canvasWidth,canvasHeight);}gl.clearColor(settings.transparentBg?0:bg.r/255,settings.transparentBg?0:bg.g/255,settings.transparentBg?0:bg.b/255,settings.transparentBg?0:1);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(program);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniformMatrix4fv(uProjection,false,orthoMatrix(-canvasWidth/2,canvasWidth/2,-canvasHeight/2,canvasHeight/2,-1000,1000));gl.uniformMatrix4fv(uView,false,identityMatrix());gl.uniform2f(uResolution,canvasWidth,canvasHeight);gl.uniform1f(uIs3D,0);const ar=settings.attrAngle*Math.PI/180,ac=Math.cos(ar),as=Math.sin(ar),g1=hexToRgb(settings.startColor),g2=hexToRgb(settings.endColor),cc=hexToRgb(settings.customColor),maxSteps=Math.floor(settings.lifetime*settings.speed),total=settings.count*maxSteps,tPos=new Float32Array(total*3),tCol=new Float32Array(total*4),tSiz=new Float32Array(total);const edgeSizeMult=settings.edgeSize/100,edgeOpacityMult=settings.edgeOpacity/100;let pi=0;for(let i=0;i<settings.count;i++){const key=settings.seed*10000+i;let sx,sy;if(settings.spawnType===2&&brightnessSamplerReady){const s=brightnessSamples[Math.floor(hashFloat2(key,100)*brightnessSamples.length)];sx=s.x;sy=s.y;}else{sx=hashRange(key,1,0,canvasWidth);sy=hashRange(key,2,0,canvasHeight);}let x=sx-canvasWidth/2,y=sy-canvasHeight/2;const sp=getSourcePixel(sx,sy),spd=settings.speed*(0.5+hashFloat2(key,3)*0.5),nf=Math.round(settings.fluct*0.708),lf=nf>0?Math.floor(hashFluct(key,2)*nf/128):0;for(let step=0;step<maxSteps;step++){const cx=x+canvasWidth/2,cy=y+canvasHeight/2;if(cx<0||cx>=canvasWidth||cy<0||cy>=canvasHeight)break;const p=getSourcePixel(cx,cy),br=0.2126*p.r+0.7152*p.g+0.0722*p.b,ch=settings.channel===1?br:settings.channel===2?p.r:settings.channel===3?p.g:p.b;let df=0;if(settings.dynFluct>0)df=Math.floor(hashFluct(key*10000+step,3)*Math.round(settings.dynFluct*0.708)/128);const ang=(ch/255)*Math.PI*2+settings.shift*Math.PI/180+lf*Math.PI/180+df*Math.PI/180;tPos[pi*3]=x;tPos[pi*3+1]=y;tPos[pi*3+2]=0;const t=step/maxSteps;if(settings.colorMode===1){tCol[pi*4]=sp.r/255;tCol[pi*4+1]=sp.g/255;tCol[pi*4+2]=sp.b/255;}else if(settings.colorMode===2){tCol[pi*4]=p.r/255;tCol[pi*4+1]=p.g/255;tCol[pi*4+2]=p.b/255;}else if(settings.colorMode===4){tCol[pi*4]=(g1.r+(g2.r-g1.r)*t)/255;tCol[pi*4+1]=(g1.g+(g2.g-g1.g)*t)/255;tCol[pi*4+2]=(g1.b+(g2.b-g1.b)*t)/255;}else{tCol[pi*4]=cc.r/255;tCol[pi*4+1]=cc.g/255;tCol[pi*4+2]=cc.b/255;}const stepEdge=getEdgeStrength(cx,cy);const baseAlpha=edgeOpacityMult>0?(0.02+stepEdge*0.98)*edgeOpacityMult+(1-edgeOpacityMult):1;tCol[pi*4+3]=(1-t)*baseAlpha;tSiz[pi]=settings.size*(1+stepEdge*edgeSizeMult*7);pi++;let vx=Math.cos(ang)*spd,vy=Math.sin(ang)*spd;if(settings.attrForce!==0){vx+=ac*settings.attrForce*0.1;vy+=as*settings.attrForce*0.1;}if(settings.edgeAttr>0){const eg=getEdgeGradient(cx,cy);const ef=settings.edgeAttr*0.05;vx+=eg.gx*ef;vy-=eg.gy*ef;}x+=vx;y+=vy;}}const aPos=gl.getAttribLocation(program,'aPosition'),aCol=gl.getAttribLocation(program,'aColor'),aSiz=gl.getAttribLocation(program,'aSize');gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,tPos.subarray(0,pi*3),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,tCol.subarray(0,pi*4),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aCol);gl.vertexAttribPointer(aCol,4,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,sizeBuffer);gl.bufferData(gl.ARRAY_BUFFER,tSiz.subarray(0,pi),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(aSiz);gl.vertexAttribPointer(aSiz,1,gl.FLOAT,false,0,0);gl.drawArrays(gl.POINTS,0,pi);if(toFramebuffer)gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
 
 function renderStaticTrails(){if(settings.glowEnabled){renderStaticTrailsCore(true);applyGlow();compositeGlow();}else{renderStaticTrailsCore(false);}}
 
-function mainLoop(){frameCount++;const now=performance.now();if(now-lastTime>=500){fps=Math.round(frameCount/((now-lastTime)/1000));document.getElementById('fpsDisplay').textContent=fps;document.getElementById('particleCount').textContent=particleCount;frameCount=0;lastTime=now;}if(useWebcam)updateFromWebcam();if(settings.mode===2)renderStaticTrails();else{const spawn=Math.min(settings.count,MAX_PARTICLES-particleCount);for(let i=0;i<spawn;i++)spawnParticle(i);updateParticles();render();}requestAnimationFrame(mainLoop);}
+function mainLoop(){frameCount++;const now=performance.now();if(now-lastTime>=500){fps=Math.round(frameCount/((now-lastTime)/1000));document.getElementById('fpsDisplay').textContent=fps;document.getElementById('particleCount').textContent=showingEdgeMap?'--':particleCount;frameCount=0;lastTime=now;}if(useWebcam)updateFromWebcam();if(showingEdgeMap){renderEdgeMapOnCanvas();}else if(settings.mode===2){renderStaticTrails();}else{const spawn=Math.min(settings.count,MAX_PARTICLES-particleCount);for(let i=0;i<spawn;i++)spawnParticle(i);updateParticles();render();}requestAnimationFrame(mainLoop);}
 
 function noiseHash(x,y,s){return(Math.sin(x*12.9898+y*78.233+s)*43758.5453)%1;}
 function smoothNoise(x,y,s){const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy,a=noiseHash(ix,iy,s),b=noiseHash(ix+1,iy,s),c=noiseHash(ix,iy+1,s),d=noiseHash(ix+1,iy+1,s),ux=fx*fx*(3-2*fx),uy=fy*fy*(3-2*fy);return a*(1-ux)*(1-uy)+b*ux*(1-uy)+c*(1-ux)*uy+d*ux*uy;}
 function fractalNoise(x,y,s,o=4){let v=0,a=0.5,f=1,m=0;for(let i=0;i<o;i++){v+=smoothNoise(x*f,y*f,s+i*100)*a;m+=a;a*=0.5;f*=2;}return v/m;}
-function createNoiseMap(){const w=512,h=288,d=new Uint8Array(w*h*4),sc=0.02;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;d[i]=Math.floor(fractalNoise(x*sc,y*sc,settings.seed)*255);d[i+1]=Math.floor(fractalNoise(x*sc,y*sc,settings.seed+1000)*255);d[i+2]=Math.floor(fractalNoise(x*sc,y*sc,settings.seed+2000)*255);d[i+3]=255;}sourceData=d;sourceWidth=w;sourceHeight=h;updateCanvasSize();updatePreview();}
-function createGradientMap(){const w=512,h=288,d=new Uint8Array(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,v=Math.floor((x/w)*255);d[i]=v;d[i+1]=v;d[i+2]=v;d[i+3]=255;}sourceData=d;sourceWidth=w;sourceHeight=h;updateCanvasSize();updatePreview();}
-function createRadialMap(){const w=512,h=288,d=new Uint8Array(w*h*4),cx=w/2,cy=h/2;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,dx=x-cx,dy=y-cy,l=Math.sqrt(dx*dx+dy*dy)||1;d[i]=Math.floor((dx/l*0.5+0.5)*255);d[i+1]=Math.floor((dy/l*0.5+0.5)*255);d[i+2]=Math.floor(0.6*255);d[i+3]=255;}sourceData=d;sourceWidth=w;sourceHeight=h;updateCanvasSize();updatePreview();}
-function create3DFlowMap(){const w=512,h=288,d=new Uint8Array(w*h*4),cx=w/2,cy=h/2,md=Math.min(w,h)*0.5;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,dx=x-cx,dy=y-cy,dist=Math.sqrt(dx*dx+dy*dy)/md,ang=Math.atan2(dy,dx),tx=-Math.sin(ang),ty=Math.cos(ang),turb=fractalNoise(x*0.02,y*0.02,settings.seed,3),zf=Math.sin(dist*4+settings.seed*0.1)*0.5;d[i]=Math.floor(((tx*0.7+(turb-0.5)*0.6)*0.5+0.5)*255);d[i+1]=Math.floor(((ty*0.7+(turb-0.5)*0.6)*0.5+0.5)*255);d[i+2]=Math.floor((zf*0.5+0.5)*255);d[i+3]=255;}sourceData=d;sourceWidth=w;sourceHeight=h;updateCanvasSize();updatePreview();}
-function updatePreview(){if(!sourceData)return;const c=document.createElement('canvas');c.width=sourceWidth;c.height=sourceHeight;const ctx=c.getContext('2d'),img=ctx.createImageData(sourceWidth,sourceHeight);img.data.set(sourceData);ctx.putImageData(img,0,0);const cont=document.getElementById('imagePreview');cont.innerHTML='';const im=document.createElement('img');im.src=c.toDataURL();cont.appendChild(im);}
+function createNoiseMap(){const w=512,h=288,d=new Uint8Array(w*h*4),sc=0.02;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;d[i]=Math.floor(fractalNoise(x*sc,y*sc,settings.seed)*255);d[i+1]=Math.floor(fractalNoise(x*sc,y*sc,settings.seed+1000)*255);d[i+2]=Math.floor(fractalNoise(x*sc,y*sc,settings.seed+2000)*255);d[i+3]=255;}sourceData=d;sourceWidth=w;sourceHeight=h;computeEdgeMap();updateCanvasSize();updatePreview();}
+function createGradientMap(){const w=512,h=288,d=new Uint8Array(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,v=Math.floor((x/w)*255);d[i]=v;d[i+1]=v;d[i+2]=v;d[i+3]=255;}sourceData=d;sourceWidth=w;sourceHeight=h;computeEdgeMap();updateCanvasSize();updatePreview();}
+function createRadialMap(){const w=512,h=288,d=new Uint8Array(w*h*4),cx=w/2,cy=h/2;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,dx=x-cx,dy=y-cy,l=Math.sqrt(dx*dx+dy*dy)||1;d[i]=Math.floor((dx/l*0.5+0.5)*255);d[i+1]=Math.floor((dy/l*0.5+0.5)*255);d[i+2]=Math.floor(0.6*255);d[i+3]=255;}sourceData=d;sourceWidth=w;sourceHeight=h;computeEdgeMap();updateCanvasSize();updatePreview();}
+function create3DFlowMap(){const w=512,h=288,d=new Uint8Array(w*h*4),cx=w/2,cy=h/2,md=Math.min(w,h)*0.5;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,dx=x-cx,dy=y-cy,dist=Math.sqrt(dx*dx+dy*dy)/md,ang=Math.atan2(dy,dx),tx=-Math.sin(ang),ty=Math.cos(ang),turb=fractalNoise(x*0.02,y*0.02,settings.seed,3),zf=Math.sin(dist*4+settings.seed*0.1)*0.5;d[i]=Math.floor(((tx*0.7+(turb-0.5)*0.6)*0.5+0.5)*255);d[i+1]=Math.floor(((ty*0.7+(turb-0.5)*0.6)*0.5+0.5)*255);d[i+2]=Math.floor((zf*0.5+0.5)*255);d[i+3]=255;}sourceData=d;sourceWidth=w;sourceHeight=h;computeEdgeMap();updateCanvasSize();updatePreview();}
+function updatePreview(){
+  if(!sourceData)return;
+  const c=document.createElement('canvas');
+  c.width=sourceWidth;
+  c.height=sourceHeight;
+  const ctx=c.getContext('2d'),img=ctx.createImageData(sourceWidth,sourceHeight);
+  img.data.set(sourceData);
+  ctx.putImageData(img,0,0);
+  const cont=document.getElementById('imagePreview');
+  cont.innerHTML='';
+  const im=document.createElement('img');
+  im.src=c.toDataURL();
+  cont.appendChild(im);
+}
+
+function renderEdgeMapOnCanvas(){
+  if(!edgeData||!gl)return;
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,canvasWidth,canvasHeight);
+  gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  
+  // Create texture from edge data (flip vertically for WebGL)
+  const texData=new Uint8Array(sourceWidth*sourceHeight*4);
+  for(let y=0;y<sourceHeight;y++){
+    for(let x=0;x<sourceWidth;x++){
+      const srcIdx=(sourceHeight-1-y)*sourceWidth+x; // flip Y
+      const dstIdx=(y*sourceWidth+x)*4;
+      const v=Math.floor(edgeData[srcIdx]*255);
+      texData[dstIdx]=v;
+      texData[dstIdx+1]=v;
+      texData[dstIdx+2]=v;
+      texData[dstIdx+3]=255;
+    }
+  }
+  
+  // Simple 2D rendering using a fullscreen quad
+  gl.useProgram(compositeProgram);
+  const tex=gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,sourceWidth,sourceHeight,0,gl.RGBA,gl.UNSIGNED_BYTE,texData);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  
+  const uOrig=gl.getUniformLocation(compositeProgram,'uOriginal');
+  const uGlow=gl.getUniformLocation(compositeProgram,'uGlow');
+  const uInt=gl.getUniformLocation(compositeProgram,'uIntensity');
+  gl.uniform1i(uOrig,0);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.uniform1i(uGlow,1);
+  gl.uniform1f(uInt,0); // No glow, just show original
+  
+  const aPos=gl.getAttribLocation(compositeProgram,'aPosition');
+  gl.bindBuffer(gl.ARRAY_BUFFER,quadBuffer);
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
+  gl.blendFunc(gl.ONE,gl.ZERO);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+  gl.deleteTexture(tex);
+}
+
+function toggleEdgeMapView(){
+  showingEdgeMap=!showingEdgeMap;
+  const btn=document.getElementById('showEdgesBtn');
+  btn.textContent=showingEdgeMap?'👁️ Hide Edge Map':'👁️ Show Edge Map';
+}
 
 async function startWebcam(){try{const stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:256},height:{ideal:256},facingMode:'user'},audio:false});webcam=document.createElement('video');webcam.srcObject=stream;webcam.setAttribute('playsinline','');webcam.muted=true;await webcam.play();useWebcam=true;sourceWidth=256;sourceHeight=256;updateCanvasSize();document.getElementById('webcamBtn').classList.add('active');document.getElementById('webcamBtn').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Active';const mb=document.getElementById('mobileWebcamBtn');if(mb)mb.classList.add('active');document.getElementById('imagePreview').innerHTML='<span>📷 Live</span>';return true;}catch(e){alert('Camera error: '+e.message);return false;}}
 function stopWebcam(){if(webcam){webcam.srcObject?.getTracks().forEach(t=>t.stop());webcam=null;}useWebcam=false;document.getElementById('webcamBtn').classList.remove('active');document.getElementById('webcamBtn').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Camera';const mb=document.getElementById('mobileWebcamBtn');if(mb)mb.classList.remove('active');}
-function updateFromWebcam(){if(!webcam||!useWebcam)return;const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');ctx.translate(256,0);ctx.scale(-1,1);ctx.drawImage(webcam,0,0,256,256);sourceData=new Uint8Array(ctx.getImageData(0,0,256,256).data);sourceWidth=256;sourceHeight=256;}
+function updateFromWebcam(){if(!webcam||!useWebcam)return;const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');ctx.translate(256,0);ctx.scale(-1,1);ctx.drawImage(webcam,0,0,256,256);sourceData=new Uint8Array(ctx.getImageData(0,0,256,256).data);sourceWidth=256;sourceHeight=256;computeEdgeMap();}
 
 function startRecording(){recordedChunks=[];const stream=canvas.captureStream(30);mediaRecorder=new MediaRecorder(stream,{mimeType:'video/webm'});mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordedChunks.push(e.data);};mediaRecorder.onstop=()=>{const blob=new Blob(recordedChunks,{type:'video/webm'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`vectory-${Date.now()}.webm`;a.click();URL.revokeObjectURL(url);showToast('Video saved!');};mediaRecorder.start();document.getElementById('recordBtn').classList.add('recording');document.getElementById('recordBtn').textContent='■ Stop';document.getElementById('mobileRecordBtn')?.classList.add('recording');document.getElementById('recordingStatus').style.display='block';}
 function stopRecording(){if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();document.getElementById('recordBtn').classList.remove('recording');document.getElementById('recordBtn').textContent='● Rec';document.getElementById('mobileRecordBtn')?.classList.remove('recording');document.getElementById('recordingStatus').style.display='none';}
@@ -893,10 +1183,10 @@ function loadSettingsFromURL(){const params=new URLSearchParams(location.search)
 function toggleFullscreen(){if(document.fullscreenElement){document.exitFullscreen();document.body.classList.remove('fullscreen');}else{document.documentElement.requestFullscreen();document.body.classList.add('fullscreen');}}
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)document.body.classList.remove('fullscreen');});
 
-function resetParticles(){particleCount=0;particleIdCounter=0;for(let i=0;i<MAX_PARTICLES;i++){trailCounts[i]=0;trailHeads[i]=0;}if(settings.spawnType===2)buildBrightnessSampler();}
+function resetParticles(){particleCount=0;particleIdCounter=0;for(let i=0;i<MAX_PARTICLES;i++){trailCounts[i]=0;trailHeads[i]=0;}buildBrightnessSampler();showingEdgeMap=false;document.getElementById('showEdgesBtn').textContent='👁️ Show Edge Map';}
 function applyPreset(name){const p=presets[name];if(!p)return;Object.assign(settings,p);syncUI();resetParticles();showToast(`${name} preset`);}
 
-function syncUI(){document.getElementById('mode').value=settings.mode;document.getElementById('seed').value=settings.seed;document.getElementById('seedVal').textContent=settings.seed;document.getElementById('spawnType').value=settings.spawnType;document.getElementById('count').value=settings.count;document.getElementById('countVal').textContent=settings.count;document.getElementById('cutoff').value=settings.cutoff;document.getElementById('cutoffVal').textContent=settings.cutoff+'%';document.getElementById('lifetime').value=settings.lifetime;document.getElementById('lifetimeVal').textContent=settings.lifetime;document.getElementById('size').value=settings.size;document.getElementById('sizeVal').textContent=settings.size;document.getElementById('speed').value=settings.speed;document.getElementById('speedVal').textContent=settings.speed;document.getElementById('channel').value=settings.channel;document.getElementById('shift').value=settings.shift;document.getElementById('shiftVal').textContent=settings.shift+'°';document.getElementById('fluct').value=settings.fluct;document.getElementById('fluctVal').textContent=settings.fluct+'°';document.getElementById('dynFluct').value=settings.dynFluct;document.getElementById('dynFluctVal').textContent=settings.dynFluct+'°';document.getElementById('attrForce').value=settings.attrForce;document.getElementById('attrForceVal').textContent=settings.attrForce;document.getElementById('attrAngle').value=settings.attrAngle;document.getElementById('attrAngleVal').textContent=settings.attrAngle+'°';document.getElementById('colorMode').value=settings.colorMode;document.getElementById('customColor').value=settings.customColor;document.getElementById('startColor').value=settings.startColor;document.getElementById('endColor').value=settings.endColor;document.getElementById('transparentBg').checked=settings.transparentBg;document.getElementById('bgColor').value=settings.bgColor;document.getElementById('fade').value=settings.fade;document.getElementById('fadeVal').textContent=settings.fade;document.getElementById('spawn3DMode').value=settings.spawn3DMode;document.getElementById('dir3DSource').value=settings.dir3DSource;document.getElementById('depthScale').value=settings.depthScale;document.getElementById('depthScaleVal').textContent=settings.depthScale;document.getElementById('imgAttr').value=settings.imgAttr;document.getElementById('imgAttrVal').textContent=settings.imgAttr;document.getElementById('camDist').value=settings.camDist;document.getElementById('camDistVal').textContent=settings.camDist;document.getElementById('fov').value=settings.fov;document.getElementById('fovVal').textContent=settings.fov+'°';document.getElementById('glowEnabled').checked=settings.glowEnabled;document.getElementById('glowIntensity').value=settings.glowIntensity;document.getElementById('glowIntensityVal').textContent=settings.glowIntensity.toFixed(1);document.getElementById('glowRadius').value=settings.glowRadius;document.getElementById('glowRadiusVal').textContent=settings.glowRadius;document.getElementById('glowThreshold').value=settings.glowThreshold;document.getElementById('glowThresholdVal').textContent=settings.glowThreshold+'%';document.getElementById('section3D').style.display=settings.mode>=4?'block':'none';document.getElementById('section2DDirection').style.display=(settings.mode<4||settings.dir3DSource===1)?'block':'none';}
+function syncUI(){document.getElementById('mode').value=settings.mode;document.getElementById('seed').value=settings.seed;document.getElementById('seedVal').textContent=settings.seed;document.getElementById('spawnType').value=settings.spawnType;document.getElementById('count').value=settings.count;document.getElementById('countVal').textContent=settings.count;document.getElementById('cutoff').value=settings.cutoff;document.getElementById('cutoffVal').textContent=settings.cutoff+'%';document.getElementById('edgeSize').value=settings.edgeSize;document.getElementById('edgeSizeVal').textContent=settings.edgeSize+'%';document.getElementById('edgeOpacity').value=settings.edgeOpacity;document.getElementById('edgeOpacityVal').textContent=settings.edgeOpacity+'%';document.getElementById('edgeAttr').value=settings.edgeAttr;document.getElementById('edgeAttrVal').textContent=settings.edgeAttr;document.getElementById('edgeMethod').value=settings.edgeMethod;document.getElementById('lifetime').value=settings.lifetime;document.getElementById('lifetimeVal').textContent=settings.lifetime;document.getElementById('size').value=settings.size;document.getElementById('sizeVal').textContent=settings.size;document.getElementById('speed').value=settings.speed;document.getElementById('speedVal').textContent=settings.speed;document.getElementById('channel').value=settings.channel;document.getElementById('shift').value=settings.shift;document.getElementById('shiftVal').textContent=settings.shift+'°';document.getElementById('fluct').value=settings.fluct;document.getElementById('fluctVal').textContent=settings.fluct+'°';document.getElementById('dynFluct').value=settings.dynFluct;document.getElementById('dynFluctVal').textContent=settings.dynFluct+'°';document.getElementById('attrForce').value=settings.attrForce;document.getElementById('attrForceVal').textContent=settings.attrForce;document.getElementById('attrAngle').value=settings.attrAngle;document.getElementById('attrAngleVal').textContent=settings.attrAngle+'°';document.getElementById('colorMode').value=settings.colorMode;document.getElementById('customColor').value=settings.customColor;document.getElementById('startColor').value=settings.startColor;document.getElementById('endColor').value=settings.endColor;document.getElementById('transparentBg').checked=settings.transparentBg;document.getElementById('bgColor').value=settings.bgColor;document.getElementById('fade').value=settings.fade;document.getElementById('fadeVal').textContent=settings.fade;document.getElementById('spawn3DMode').value=settings.spawn3DMode;document.getElementById('dir3DSource').value=settings.dir3DSource;document.getElementById('depthScale').value=settings.depthScale;document.getElementById('depthScaleVal').textContent=settings.depthScale;document.getElementById('imgAttr').value=settings.imgAttr;document.getElementById('imgAttrVal').textContent=settings.imgAttr;document.getElementById('camDist').value=settings.camDist;document.getElementById('camDistVal').textContent=settings.camDist;document.getElementById('fov').value=settings.fov;document.getElementById('fovVal').textContent=settings.fov+'°';document.getElementById('glowEnabled').checked=settings.glowEnabled;document.getElementById('glowIntensity').value=settings.glowIntensity;document.getElementById('glowIntensityVal').textContent=settings.glowIntensity.toFixed(1);document.getElementById('glowRadius').value=settings.glowRadius;document.getElementById('glowRadiusVal').textContent=settings.glowRadius;document.getElementById('glowThreshold').value=settings.glowThreshold;document.getElementById('glowThresholdVal').textContent=settings.glowThreshold+'%';document.getElementById('section3D').style.display=settings.mode>=4?'block':'none';document.getElementById('section2DDirection').style.display=(settings.mode<4||settings.dir3DSource===1)?'block':'none';}
 function updateHintVisibility(){document.getElementById('rotateHint').classList.toggle('hidden',settings.mode<4||hintInteracted);}
 function hideHint(){if(!hintInteracted){hintInteracted=true;updateHintVisibility();}}
 
@@ -906,7 +1196,7 @@ document.addEventListener('keydown',e=>{if(e.key==='f'||e.key==='F')toggleFullsc
 
 function setupMobileUI(){const controls=document.getElementById('controls'),handle=document.getElementById('mobileHandle');handle.addEventListener('click',()=>controls.classList.toggle('expanded'));document.getElementById('canvas-container').addEventListener('click',()=>{if(window.innerWidth<=900&&controls.classList.contains('expanded'))controls.classList.remove('expanded');});let touchY=0;handle.addEventListener('touchstart',e=>touchY=e.touches[0].clientY,{passive:true});handle.addEventListener('touchmove',e=>{const dy=e.touches[0].clientY-touchY;if(dy>40&&controls.classList.contains('expanded'))controls.classList.remove('expanded');else if(dy<-40&&!controls.classList.contains('expanded'))controls.classList.add('expanded');},{passive:true});document.getElementById('mobileWebcamBtn').addEventListener('click',()=>{if(useWebcam){stopWebcam();create3DFlowMap();}else startWebcam();});document.getElementById('mobileSaveBtn').addEventListener('click',saveImage);document.getElementById('mobileRecordBtn').addEventListener('click',toggleRecording);document.getElementById('mobileFullscreenBtn').addEventListener('click',toggleFullscreen);}
 
-function setupControls(){const upd=(id,suf='')=>{const e=document.getElementById(id),v=document.getElementById(id+'Val');if(v)v.textContent=e.value+suf;};document.querySelectorAll('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>applyPreset(btn.dataset.preset)));document.getElementById('presetNoise').addEventListener('click',()=>{stopWebcam();createNoiseMap();resetParticles();});document.getElementById('presetGradient').addEventListener('click',()=>{stopWebcam();createGradientMap();resetParticles();});document.getElementById('presetRadial').addEventListener('click',()=>{stopWebcam();createRadialMap();resetParticles();});document.getElementById('preset3DFlow').addEventListener('click',()=>{stopWebcam();create3DFlowMap();resetParticles();});document.getElementById('webcamBtn').addEventListener('click',()=>{if(useWebcam){stopWebcam();create3DFlowMap();}else startWebcam();});document.getElementById('mode').addEventListener('change',e=>{settings.mode=+e.target.value;document.getElementById('section3D').style.display=settings.mode>=4?'block':'none';document.getElementById('section2DDirection').style.display=(settings.mode<4||settings.dir3DSource===1)?'block':'none';updateHintVisibility();const cs=document.getElementById('count'),cv=document.getElementById('countVal');if(settings.mode===2){cs.max=5000;settings.count=2000;}else if(settings.mode===3){cs.max=500;settings.count=150;}else if(settings.mode===5){cs.max=500;settings.count=100;}else{cs.max=2000;settings.count=1000;}cs.value=settings.count;cv.textContent=settings.count;resetParticles();});document.getElementById('spawn3DMode').addEventListener('change',e=>settings.spawn3DMode=+e.target.value);document.getElementById('dir3DSource').addEventListener('change',e=>{settings.dir3DSource=+e.target.value;document.getElementById('section2DDirection').style.display=(settings.mode<4||settings.dir3DSource===1)?'block':'none';});['depthScale','imgAttr','camDist'].forEach(id=>document.getElementById(id).addEventListener('input',e=>{settings[id]=+e.target.value;upd(id);}));document.getElementById('fov').addEventListener('input',e=>{settings.fov=+e.target.value;upd('fov','°');});document.getElementById('seed').addEventListener('input',e=>{settings.seed=+e.target.value;upd('seed');});document.getElementById('spawnType').addEventListener('change',e=>{settings.spawnType=+e.target.value;if(settings.spawnType===2)buildBrightnessSampler();});document.getElementById('count').addEventListener('input',e=>{settings.count=+e.target.value;upd('count');});document.getElementById('cutoff').addEventListener('input',e=>{settings.cutoff=+e.target.value;upd('cutoff','%');if(settings.spawnType===2)buildBrightnessSampler();});document.getElementById('lifetime').addEventListener('input',e=>{settings.lifetime=+e.target.value;upd('lifetime');});document.getElementById('size').addEventListener('input',e=>{settings.size=+e.target.value;upd('size');});document.getElementById('speed').addEventListener('input',e=>{settings.speed=+e.target.value;upd('speed');});document.getElementById('channel').addEventListener('change',e=>settings.channel=+e.target.value);document.getElementById('shift').addEventListener('input',e=>{settings.shift=+e.target.value;upd('shift','°');});document.getElementById('fluct').addEventListener('input',e=>{settings.fluct=+e.target.value;upd('fluct','°');});document.getElementById('dynFluct').addEventListener('input',e=>{settings.dynFluct=+e.target.value;upd('dynFluct','°');});document.getElementById('attrForce').addEventListener('input',e=>{settings.attrForce=+e.target.value;upd('attrForce');});document.getElementById('attrAngle').addEventListener('input',e=>{settings.attrAngle=+e.target.value;upd('attrAngle','°');});document.getElementById('colorMode').addEventListener('change',e=>settings.colorMode=+e.target.value);document.getElementById('customColor').addEventListener('input',e=>settings.customColor=e.target.value);document.getElementById('startColor').addEventListener('input',e=>settings.startColor=e.target.value);document.getElementById('endColor').addEventListener('input',e=>settings.endColor=e.target.value);document.getElementById('transparentBg').addEventListener('change',e=>settings.transparentBg=e.target.checked);document.getElementById('bgColor').addEventListener('input',e=>settings.bgColor=e.target.value);document.getElementById('fade').addEventListener('input',e=>{settings.fade=+e.target.value;upd('fade');});document.getElementById('glowEnabled').addEventListener('change',e=>settings.glowEnabled=e.target.checked);document.getElementById('glowIntensity').addEventListener('input',e=>{settings.glowIntensity=+e.target.value;document.getElementById('glowIntensityVal').textContent=(+e.target.value).toFixed(1);});document.getElementById('glowRadius').addEventListener('input',e=>{settings.glowRadius=+e.target.value;upd('glowRadius');});document.getElementById('glowThreshold').addEventListener('input',e=>{settings.glowThreshold=+e.target.value;upd('glowThreshold','%');});document.getElementById('resetBtn').addEventListener('click',resetParticles);document.getElementById('recordBtn').addEventListener('click',toggleRecording);document.getElementById('saveBtn').addEventListener('click',saveImage);document.getElementById('shareBtn').addEventListener('click',shareSettings);document.getElementById('fullscreenBtn').addEventListener('click',toggleFullscreen);document.getElementById('imageInput').addEventListener('change',e=>{const f=e.target.files[0];if(f){stopWebcam();const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);sourceData=new Uint8Array(ctx.getImageData(0,0,img.width,img.height).data);sourceWidth=img.width;sourceHeight=img.height;updateCanvasSize();updatePreview();resetParticles();};img.src=URL.createObjectURL(f);}});syncUI();updateHintVisibility();}
+function setupControls(){const upd=(id,suf='')=>{const e=document.getElementById(id),v=document.getElementById(id+'Val');if(v)v.textContent=e.value+suf;};document.querySelectorAll('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>applyPreset(btn.dataset.preset)));document.getElementById('presetNoise').addEventListener('click',()=>{stopWebcam();createNoiseMap();resetParticles();});document.getElementById('presetGradient').addEventListener('click',()=>{stopWebcam();createGradientMap();resetParticles();});document.getElementById('presetRadial').addEventListener('click',()=>{stopWebcam();createRadialMap();resetParticles();});document.getElementById('preset3DFlow').addEventListener('click',()=>{stopWebcam();create3DFlowMap();resetParticles();});document.getElementById('showEdgesBtn').addEventListener('click',toggleEdgeMapView);document.getElementById('webcamBtn').addEventListener('click',()=>{if(useWebcam){stopWebcam();create3DFlowMap();}else startWebcam();});document.getElementById('mode').addEventListener('change',e=>{settings.mode=+e.target.value;document.getElementById('section3D').style.display=settings.mode>=4?'block':'none';document.getElementById('section2DDirection').style.display=(settings.mode<4||settings.dir3DSource===1)?'block':'none';updateHintVisibility();const cs=document.getElementById('count'),cv=document.getElementById('countVal');if(settings.mode===2){cs.max=5000;settings.count=2000;}else if(settings.mode===3){cs.max=500;settings.count=150;}else if(settings.mode===5){cs.max=500;settings.count=100;}else{cs.max=2000;settings.count=1000;}cs.value=settings.count;cv.textContent=settings.count;resetParticles();});document.getElementById('spawn3DMode').addEventListener('change',e=>settings.spawn3DMode=+e.target.value);document.getElementById('dir3DSource').addEventListener('change',e=>{settings.dir3DSource=+e.target.value;document.getElementById('section2DDirection').style.display=(settings.mode<4||settings.dir3DSource===1)?'block':'none';});['depthScale','imgAttr','camDist'].forEach(id=>document.getElementById(id).addEventListener('input',e=>{settings[id]=+e.target.value;upd(id);}));document.getElementById('fov').addEventListener('input',e=>{settings.fov=+e.target.value;upd('fov','°');});document.getElementById('seed').addEventListener('input',e=>{settings.seed=+e.target.value;upd('seed');});document.getElementById('spawnType').addEventListener('change',e=>{settings.spawnType=+e.target.value;buildBrightnessSampler();});document.getElementById('count').addEventListener('input',e=>{settings.count=+e.target.value;upd('count');});document.getElementById('cutoff').addEventListener('input',e=>{settings.cutoff=+e.target.value;upd('cutoff','%');buildBrightnessSampler();});document.getElementById('edgeSize').addEventListener('input',e=>{settings.edgeSize=+e.target.value;upd('edgeSize','%');});document.getElementById('edgeOpacity').addEventListener('input',e=>{settings.edgeOpacity=+e.target.value;upd('edgeOpacity','%');});document.getElementById('edgeAttr').addEventListener('input',e=>{settings.edgeAttr=+e.target.value;upd('edgeAttr');});document.getElementById('edgeMethod').addEventListener('change',e=>{settings.edgeMethod=+e.target.value;computeEdgeMap();});document.getElementById('lifetime').addEventListener('input',e=>{settings.lifetime=+e.target.value;upd('lifetime');});document.getElementById('size').addEventListener('input',e=>{settings.size=+e.target.value;upd('size');});document.getElementById('speed').addEventListener('input',e=>{settings.speed=+e.target.value;upd('speed');});document.getElementById('channel').addEventListener('change',e=>settings.channel=+e.target.value);document.getElementById('shift').addEventListener('input',e=>{settings.shift=+e.target.value;upd('shift','°');});document.getElementById('fluct').addEventListener('input',e=>{settings.fluct=+e.target.value;upd('fluct','°');});document.getElementById('dynFluct').addEventListener('input',e=>{settings.dynFluct=+e.target.value;upd('dynFluct','°');});document.getElementById('attrForce').addEventListener('input',e=>{settings.attrForce=+e.target.value;upd('attrForce');});document.getElementById('attrAngle').addEventListener('input',e=>{settings.attrAngle=+e.target.value;upd('attrAngle','°');});document.getElementById('colorMode').addEventListener('change',e=>settings.colorMode=+e.target.value);document.getElementById('customColor').addEventListener('input',e=>settings.customColor=e.target.value);document.getElementById('startColor').addEventListener('input',e=>settings.startColor=e.target.value);document.getElementById('endColor').addEventListener('input',e=>settings.endColor=e.target.value);document.getElementById('transparentBg').addEventListener('change',e=>settings.transparentBg=e.target.checked);document.getElementById('bgColor').addEventListener('input',e=>settings.bgColor=e.target.value);document.getElementById('fade').addEventListener('input',e=>{settings.fade=+e.target.value;upd('fade');});document.getElementById('glowEnabled').addEventListener('change',e=>settings.glowEnabled=e.target.checked);document.getElementById('glowIntensity').addEventListener('input',e=>{settings.glowIntensity=+e.target.value;document.getElementById('glowIntensityVal').textContent=(+e.target.value).toFixed(1);});document.getElementById('glowRadius').addEventListener('input',e=>{settings.glowRadius=+e.target.value;upd('glowRadius');});document.getElementById('glowThreshold').addEventListener('input',e=>{settings.glowThreshold=+e.target.value;upd('glowThreshold','%');});document.getElementById('resetBtn').addEventListener('click',resetParticles);document.getElementById('recordBtn').addEventListener('click',toggleRecording);document.getElementById('saveBtn').addEventListener('click',saveImage);document.getElementById('shareBtn').addEventListener('click',shareSettings);document.getElementById('fullscreenBtn').addEventListener('click',toggleFullscreen);document.getElementById('imageInput').addEventListener('change',e=>{const f=e.target.files[0];if(f){stopWebcam();const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);sourceData=new Uint8Array(ctx.getImageData(0,0,img.width,img.height).data);sourceWidth=img.width;sourceHeight=img.height;computeEdgeMap();updateCanvasSize();updatePreview();resetParticles();};img.src=URL.createObjectURL(f);}});syncUI();updateHintVisibility();}
 
 function updateCanvasSize(){
   const cont=document.getElementById('canvas-container');
