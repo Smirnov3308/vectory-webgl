@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
@@ -10,791 +9,785 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-```
-:root {
-  /* shadcn/ui Zinc Dark Theme */
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
-  --radius: 0.5rem;
-  /* Custom */
-  --success: 142 70% 45%;
-  --danger: 0 72% 51%;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  min-height: 100vh;
-  min-height: 100dvh;
-  height: 100dvh;
-  display: flex;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior: none;
-}
-
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
-
-#controls {
-  width: 300px;
-  min-width: 300px;
-  background: hsl(var(--background));
-  border-right: 1px solid hsl(var(--border));
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-}
-
-.sidebar-header {
-  padding: 16px;
-  border-bottom: 1px solid hsl(var(--border));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.logo h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.025em; }
-.logo-subtitle { font-size: 12px; color: hsl(var(--muted-foreground)); margin-top: 2px; }
-.header-actions { display: flex; gap: 4px; }
-.header-actions button { width: 36px; height: 36px; padding: 0; }
-.sidebar-content { flex: 1; overflow-y: auto; padding: 12px; }
-
-.section { margin-bottom: 2px; }
-.section-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 10px 12px;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius);
-  color: hsl(var(--foreground));
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color 0.15s;
-}
-.section-trigger:hover { background: hsl(var(--accent)); }
-.section-trigger:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-.section-trigger svg { width: 16px; height: 16px; color: hsl(var(--muted-foreground)); transition: transform 0.2s ease; }
-.section.collapsed .section-trigger svg { transform: rotate(-90deg); }
-.section.collapsed .section-content { display: none; }
-.section-content { padding: 8px 12px 12px; }
-
-.control-group { margin-bottom: 16px; }
-.control-group:last-child { margin-bottom: 0; }
-
-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 500;
-  color: hsl(var(--foreground));
-  margin-bottom: 8px;
-  line-height: 1;
-}
-
-label .value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 400;
-  color: hsl(var(--muted-foreground));
-  background: hsl(var(--muted));
-  padding: 2px 6px;
-  border-radius: calc(var(--radius) - 2px);
-}
-
-input[type="range"] {
-  width: 100%;
-  height: 8px;
-  -webkit-appearance: none;
-  background: hsl(var(--secondary));
-  border-radius: 9999px;
-  outline: none;
-  cursor: pointer;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: hsl(var(--primary));
-  border: 2px solid hsl(var(--primary));
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-input[type="range"]::-webkit-slider-thumb:hover { background: hsl(var(--primary) / 0.9); }
-input[type="range"]:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-
-select {
-  width: 100%;
-  height: 36px;
-  padding: 0 32px 0 12px;
-  background: hsl(var(--background));
-  border: 1px solid hsl(var(--input));
-  border-radius: var(--radius);
-  color: hsl(var(--foreground));
-  font-size: 14px;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-  appearance: none;
-  transition: border-color 0.15s;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-}
-select:hover { border-color: hsl(var(--ring)); }
-select:focus { border-color: hsl(var(--ring)); outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-
-input[type="file"] {
-  width: 100%;
-  height: 36px;
-  padding: 6px 12px;
-  background: hsl(var(--background));
-  border: 1px solid hsl(var(--input));
-  border-radius: var(--radius);
-  color: hsl(var(--foreground));
-  font-size: 14px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-input[type="file"]:hover { border-color: hsl(var(--ring)); }
-
-input[type="color"] {
-  width: 100%;
-  height: 36px;
-  padding: 4px;
-  background: hsl(var(--background));
-  border: 1px solid hsl(var(--input));
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-input[type="color"]:hover { border-color: hsl(var(--ring)); }
-input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
-input[type="color"]::-webkit-color-swatch { border-radius: calc(var(--radius) - 4px); border: none; }
-
-.checkbox-wrapper { display: flex; align-items: center; gap: 8px; }
-.checkbox-wrapper input[type="checkbox"] { 
-  width: 16px; 
-  height: 16px; 
-  accent-color: hsl(var(--primary)); 
-  cursor: pointer;
-  border-radius: calc(var(--radius) - 4px);
-}
-.checkbox-wrapper label { margin: 0; font-size: 14px; color: hsl(var(--foreground)); cursor: pointer; }
-
-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border: none;
-  border-radius: var(--radius);
-  font-size: 14px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
-  white-space: nowrap;
-}
-button:hover { opacity: 0.9; }
-button:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-button:active { transform: scale(0.98); }
-button:disabled { pointer-events: none; opacity: 0.5; }
-button.secondary { background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
-button.secondary:hover { background: hsl(var(--secondary) / 0.8); }
-button.outline { background: transparent; border: 1px solid hsl(var(--input)); color: hsl(var(--foreground)); }
-button.outline:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
-button.ghost { background: transparent; color: hsl(var(--foreground)); }
-button.ghost:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
-button.destructive { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
-button.recording { background: hsl(var(--danger)); animation: pulse 1s infinite; }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-
-.preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-.preset-grid button { height: 32px; font-size: 13px; padding: 0 10px; }
-
-.preview-box {
-  width: 100%;
-  height: 80px;
-  background: hsl(var(--muted));
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  margin-top: 8px;
-}
-.preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.preview-box span { font-size: 13px; color: hsl(var(--muted-foreground)); }
-
-.sidebar-footer {
-  padding: 12px;
-  border-top: 1px solid hsl(var(--border));
-  display: flex;
-  gap: 8px;
-}
-.sidebar-footer button { flex: 1; height: 36px; }
-
-#canvas-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  background: hsl(var(--background));
-  position: relative;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.stats-bar {
-  display: flex;
-  gap: 20px;
-  padding: 10px 16px;
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
-  margin-bottom: 12px;
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
-}
-.stat { display: flex; align-items: center; gap: 8px; }
-.stat-label { color: hsl(var(--muted-foreground)); font-weight: 400; }
-.stat-value { color: hsl(var(--foreground)); font-weight: 500; }
-.stat-value.fps { color: hsl(var(--success)); }
-.stat-value.recording { color: hsl(var(--danger)); }
-
-#canvas-wrapper { position: relative; }
-canvas { border-radius: var(--radius); border: 1px solid hsl(var(--border)); touch-action: none; }
-
-.flash-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: white;
-  opacity: 0;
-  pointer-events: none;
-  border-radius: var(--radius);
-  z-index: 10;
-}
-.flash-overlay.flash { animation: flashAnim 0.25s ease-out; }
-@keyframes flashAnim { 0% { opacity: 0.7; } 100% { opacity: 0; } }
-
-.rotate-hint {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 14px;
-  background: hsl(var(--card) / 0.95);
-  backdrop-filter: blur(8px);
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
-  font-size: 13px;
-  color: hsl(var(--muted-foreground));
-  pointer-events: none;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-  z-index: 5;
-}
-.rotate-hint.hidden { opacity: 0; }
-.rotate-hint kbd {
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  padding: 0 6px;
-  background: hsl(var(--muted));
-  border: 1px solid hsl(var(--border));
-  border-radius: calc(var(--radius) - 2px);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: hsl(var(--foreground));
-  margin: 0 3px;
-  box-shadow: 0 1px 0 hsl(var(--border));
-}
-.rotate-hint .hint-mobile { display: none; }
-@media (pointer: coarse) {
-  .rotate-hint .hint-desktop { display: none; }
-  .rotate-hint .hint-mobile { display: flex; gap: 8px; }
-}
-
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  z-index: 1000;
-}
-.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-.toast-icon {
-  width: 20px; height: 20px;
-  background: hsl(var(--success));
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.toast-icon svg { width: 12px; height: 12px; color: white; }
-
-body.fullscreen #controls { display: none; }
-body.fullscreen .mobile-toolbar { display: none !important; }
-
-@media (max-width: 900px) {
-  body {
-    flex-direction: column;
-    height: 100dvh;
-    overflow: hidden;
-  }
-  
-  #controls {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    width: 100%;
-    min-width: 100%;
-    height: auto;
-    max-height: 60dvh;
-    border-right: none;
-    border-top: 1px solid hsl(var(--border));
-    border-radius: 16px 16px 0 0;
-    transform: translateY(calc(100% - 56px));
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 100;
-    background: hsl(var(--background));
-  }
-  #controls.expanded { transform: translateY(0); }
-  #controls .sidebar-header { display: none; }
-  #controls .sidebar-content { 
-    padding: 8px 12px 20px; 
-    max-height: calc(60dvh - 56px); 
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  #controls .sidebar-footer { display: none; }
-  #controls .camera-btn { display: none; }
-  
-  .mobile-handle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px 8px 8px;
-    cursor: grab;
-    touch-action: none;
-  }
-  .mobile-handle::before {
-    content: '';
-    width: 36px;
-    height: 5px;
-    background: hsl(var(--muted-foreground) / 0.5);
-    border-radius: 3px;
-  }
-  .mobile-handle-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: hsl(var(--muted-foreground));
-    margin-top: 6px;
-  }
-  
-  #canvas-container {
-    flex: 1;
-    justify-content: center;
-    align-items: center;
-    padding: 8px;
-    padding-bottom: 130px;
-    min-height: 0;
-  }
-  
-  .stats-bar {
-    margin-bottom: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    gap: 12px;
-  }
-  
-  #canvas-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-height: calc(100dvh - 200px);
-  }
-  
-  canvas {
-    max-width: 100%;
-    max-height: calc(100dvh - 200px);
-    width: auto !important;
-    height: auto !important;
-  }
-  
-  .mobile-toolbar {
-    display: flex;
-    position: fixed;
-    bottom: 68px;
-    left: 50%;
-    transform: translateX(-50%);
-    gap: 8px;
-    padding: 8px;
-    background: hsl(var(--card) / 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border));
-    border-radius: 14px;
-    z-index: 50;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  }
-  .mobile-toolbar button { 
-    width: 48px; 
-    height: 48px; 
-    padding: 0; 
-    border-radius: 10px;
-    min-width: 48px;
-  }
-  .mobile-toolbar button svg { width: 22px; height: 22px; }
-  .mobile-toolbar button.active { background: hsl(var(--success)); }
-  .mobile-toolbar button.recording { background: hsl(var(--danger)); }
-  
-  .rotate-hint { 
-    bottom: 130px; 
-    font-size: 12px;
-    padding: 10px 14px;
-  }
-  
-  /* Mobile controls sizing */
-  #controls .section-trigger {
-    padding: 12px;
-    font-size: 14px;
-  }
-  #controls .section-trigger svg { width: 14px; height: 14px; }
-  
-  #controls label {
-    font-size: 13px;
-    margin-bottom: 8px;
-  }
-  #controls label .value {
-    font-size: 11px;
-    padding: 2px 6px;
-  }
-  
-  #controls input[type="range"] {
-    height: 8px;
-  }
-  #controls input[type="range"]::-webkit-slider-thumb {
-    width: 20px;
-    height: 20px;
-  }
-  
-  #controls select {
-    height: 44px;
-    font-size: 14px;
-    padding: 0 32px 0 12px;
-  }
-  
-  #controls input[type="file"] {
-    height: 44px;
-    font-size: 13px;
-    padding: 10px 12px;
-  }
-  
-  #controls input[type="color"] {
-    height: 44px;
-  }
-  
-  #controls .checkbox-wrapper {
-    min-height: 44px;
-    padding: 8px 0;
-  }
-  #controls .checkbox-wrapper input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-  }
-  #controls .checkbox-wrapper label {
-    font-size: 14px;
-    margin: 0;
-  }
-  
-  #controls .control-group {
-    margin-bottom: 14px;
-  }
-  
-  #controls .preset-grid {
-    gap: 6px;
-  }
-  #controls .preset-grid button {
-    height: 40px;
-    font-size: 13px;
-  }
-  
-  #controls .preview-box {
-    height: 70px;
-  }
-  
-  #controls .section .section-content { display: none; }
-  #controls .section.mobile-expanded .section-content { display: block; }
-  
-  .toast {
-    bottom: 140px;
-    font-size: 14px;
-    padding: 12px 16px;
-  }
-}
-
-/* Small phones */
-@media (max-width: 380px) {
-  .mobile-toolbar {
-    gap: 6px;
-    padding: 6px;
-  }
-  .mobile-toolbar button {
-    width: 44px;
-    height: 44px;
-  }
-  .mobile-toolbar button svg { width: 20px; height: 20px; }
-  
-  .stats-bar {
-    font-size: 11px;
-    gap: 10px;
-    padding: 6px 10px;
-  }
-}
-
-@media (min-width: 901px) { .mobile-handle, .mobile-toolbar { display: none; } }
-
-/* Portrait orientation on mobile - move canvas up */
-@media (max-width: 900px) and (orientation: portrait) {
-  #canvas-container {
-    padding-top: 0;
-    padding-bottom: 70px;
-    justify-content: flex-start;
-  }
-  .stats-bar {
-    margin-bottom: 4px;
-  }
-  #canvas-wrapper {
-    max-height: calc(100dvh - 150px);
-  }
-  canvas {
-    max-height: calc(100dvh - 150px);
-  }
-}
-```
-
+    
+    :root {
+      /* shadcn/ui Zinc Dark Theme */
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 3.9%;
+      --card-foreground: 0 0% 98%;
+      --popover: 240 10% 3.9%;
+      --popover-foreground: 0 0% 98%;
+      --primary: 0 0% 98%;
+      --primary-foreground: 240 5.9% 10%;
+      --secondary: 240 3.7% 15.9%;
+      --secondary-foreground: 0 0% 98%;
+      --muted: 240 3.7% 15.9%;
+      --muted-foreground: 240 5% 64.9%;
+      --accent: 240 3.7% 15.9%;
+      --accent-foreground: 0 0% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 240 3.7% 15.9%;
+      --input: 240 3.7% 15.9%;
+      --ring: 240 4.9% 83.9%;
+      --radius: 0.5rem;
+      /* Custom */
+      --success: 142 70% 45%;
+      --danger: 0 72% 51%;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      min-height: 100vh;
+      min-height: 100dvh;
+      height: 100dvh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
+    
+    #controls {
+      width: 300px;
+      min-width: 300px;
+      background: hsl(var(--background));
+      border-right: 1px solid hsl(var(--border));
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+    
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid hsl(var(--border));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.025em; }
+    .logo-subtitle { font-size: 12px; color: hsl(var(--muted-foreground)); margin-top: 2px; }
+    .header-actions { display: flex; gap: 4px; }
+    .header-actions button { width: 36px; height: 36px; padding: 0; }
+    .sidebar-content { flex: 1; overflow-y: auto; padding: 12px; }
+    
+    .section { margin-bottom: 2px; }
+    .section-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 12px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius);
+      color: hsl(var(--foreground));
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background-color 0.15s;
+    }
+    .section-trigger:hover { background: hsl(var(--accent)); }
+    .section-trigger:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    .section-trigger svg { width: 16px; height: 16px; color: hsl(var(--muted-foreground)); transition: transform 0.2s ease; }
+    .section.collapsed .section-trigger svg { transform: rotate(-90deg); }
+    .section.collapsed .section-content { display: none; }
+    .section-content { padding: 8px 12px 12px; }
+    
+    .control-group { margin-bottom: 16px; }
+    .control-group:last-child { margin-bottom: 0; }
+    
+    label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: hsl(var(--foreground));
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+    
+    label .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 400;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+      padding: 2px 6px;
+      border-radius: calc(var(--radius) - 2px);
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      background: hsl(var(--secondary));
+      border-radius: 9999px;
+      outline: none;
+      cursor: pointer;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: hsl(var(--primary));
+      border: 2px solid hsl(var(--primary));
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { background: hsl(var(--primary) / 0.9); }
+    input[type="range"]:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    
+    select {
+      width: 100%;
+      height: 36px;
+      padding: 0 32px 0 12px;
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--input));
+      border-radius: var(--radius);
+      color: hsl(var(--foreground));
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      transition: border-color 0.15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    select:hover { border-color: hsl(var(--ring)); }
+    select:focus { border-color: hsl(var(--ring)); outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    
+    input[type="file"] {
+      width: 100%;
+      height: 36px;
+      padding: 6px 12px;
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--input));
+      border-radius: var(--radius);
+      color: hsl(var(--foreground));
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    input[type="file"]:hover { border-color: hsl(var(--ring)); }
+    
+    input[type="color"] {
+      width: 100%;
+      height: 36px;
+      padding: 4px;
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--input));
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    input[type="color"]:hover { border-color: hsl(var(--ring)); }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+    input[type="color"]::-webkit-color-swatch { border-radius: calc(var(--radius) - 4px); border: none; }
+    
+    .checkbox-wrapper { display: flex; align-items: center; gap: 8px; }
+    .checkbox-wrapper input[type="checkbox"] { 
+      width: 16px; 
+      height: 16px; 
+      accent-color: hsl(var(--primary)); 
+      cursor: pointer;
+      border-radius: calc(var(--radius) - 4px);
+    }
+    .checkbox-wrapper label { margin: 0; font-size: 14px; color: hsl(var(--foreground)); cursor: pointer; }
+    
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 16px;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    button:hover { opacity: 0.9; }
+    button:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    button:active { transform: scale(0.98); }
+    button:disabled { pointer-events: none; opacity: 0.5; }
+    button.secondary { background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+    button.secondary:hover { background: hsl(var(--secondary) / 0.8); }
+    button.outline { background: transparent; border: 1px solid hsl(var(--input)); color: hsl(var(--foreground)); }
+    button.outline:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+    button.ghost { background: transparent; color: hsl(var(--foreground)); }
+    button.ghost:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+    button.destructive { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
+    button.recording { background: hsl(var(--danger)); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    
+    .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .preset-grid button { height: 32px; font-size: 13px; padding: 0 10px; }
+    
+    .preview-box {
+      width: 100%;
+      height: 80px;
+      background: hsl(var(--muted));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .preview-box span { font-size: 13px; color: hsl(var(--muted-foreground)); }
+    
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid hsl(var(--border));
+      display: flex;
+      gap: 8px;
+    }
+    .sidebar-footer button { flex: 1; height: 36px; }
+    
+    #canvas-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      background: hsl(var(--background));
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+    }
+    
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      padding: 10px 16px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat { display: flex; align-items: center; gap: 8px; }
+    .stat-label { color: hsl(var(--muted-foreground)); font-weight: 400; }
+    .stat-value { color: hsl(var(--foreground)); font-weight: 500; }
+    .stat-value.fps { color: hsl(var(--success)); }
+    .stat-value.recording { color: hsl(var(--danger)); }
+    
+    #canvas-wrapper { position: relative; }
+    canvas { border-radius: var(--radius); border: 1px solid hsl(var(--border)); touch-action: none; }
+    
+    .flash-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      border-radius: var(--radius);
+      z-index: 10;
+    }
+    .flash-overlay.flash { animation: flashAnim 0.25s ease-out; }
+    @keyframes flashAnim { 0% { opacity: 0.7; } 100% { opacity: 0; } }
+    
+    .rotate-hint {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 14px;
+      background: hsl(var(--card) / 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: hsl(var(--muted-foreground));
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+      z-index: 5;
+    }
+    .rotate-hint.hidden { opacity: 0; }
+    .rotate-hint kbd {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 6px;
+      background: hsl(var(--muted));
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: hsl(var(--foreground));
+      margin: 0 3px;
+      box-shadow: 0 1px 0 hsl(var(--border));
+    }
+    .rotate-hint .hint-mobile { display: none; }
+    @media (pointer: coarse) {
+      .rotate-hint .hint-desktop { display: none; }
+      .rotate-hint .hint-mobile { display: flex; gap: 8px; }
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 1000;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast-icon {
+      width: 20px; height: 20px;
+      background: hsl(var(--success));
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .toast-icon svg { width: 12px; height: 12px; color: white; }
+    
+    body.fullscreen #controls { display: none; }
+    body.fullscreen .mobile-toolbar { display: none !important; }
+    
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+        height: 100dvh;
+        overflow: hidden;
+      }
+      
+      #controls {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        max-height: 60dvh;
+        border-right: none;
+        border-top: 1px solid hsl(var(--border));
+        border-radius: 16px 16px 0 0;
+        transform: translateY(calc(100% - 56px));
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+        background: hsl(var(--background));
+      }
+      #controls.expanded { transform: translateY(0); }
+      #controls .sidebar-header { display: none; }
+      #controls .sidebar-content { 
+        padding: 8px 12px 20px; 
+        max-height: calc(60dvh - 56px); 
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #controls .sidebar-footer { display: none; }
+      #controls .camera-btn { display: none; }
+      
+      .mobile-handle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 8px 8px;
+        cursor: grab;
+        touch-action: none;
+      }
+      .mobile-handle::before {
+        content: '';
+        width: 36px;
+        height: 5px;
+        background: hsl(var(--muted-foreground) / 0.5);
+        border-radius: 3px;
+      }
+      .mobile-handle-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: hsl(var(--muted-foreground));
+        margin-top: 6px;
+      }
+      
+      #canvas-container {
+        flex: 1;
+        justify-content: center;
+        align-items: center;
+        padding: 8px;
+        padding-bottom: 130px;
+        min-height: 0;
+      }
+      
+      .stats-bar {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        font-size: 12px;
+        gap: 12px;
+      }
+      
+      #canvas-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-height: calc(100dvh - 200px);
+      }
+      
+      canvas {
+        max-width: 100%;
+        max-height: calc(100dvh - 200px);
+        width: auto !important;
+        height: auto !important;
+      }
+      
+      .mobile-toolbar {
+        display: flex;
+        position: fixed;
+        bottom: 68px;
+        left: 50%;
+        transform: translateX(-50%);
+        gap: 8px;
+        padding: 8px;
+        background: hsl(var(--card) / 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid hsl(var(--border));
+        border-radius: 14px;
+        z-index: 50;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+      .mobile-toolbar button { 
+        width: 48px; 
+        height: 48px; 
+        padding: 0; 
+        border-radius: 10px;
+        min-width: 48px;
+      }
+      .mobile-toolbar button svg { width: 22px; height: 22px; }
+      .mobile-toolbar button.active { background: hsl(var(--success)); }
+      .mobile-toolbar button.recording { background: hsl(var(--danger)); }
+      
+      .rotate-hint { 
+        bottom: 130px; 
+        font-size: 12px;
+        padding: 10px 14px;
+      }
+      
+      /* Mobile controls sizing */
+      #controls .section-trigger {
+        padding: 12px;
+        font-size: 14px;
+      }
+      #controls .section-trigger svg { width: 14px; height: 14px; }
+      
+      #controls label {
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      #controls label .value {
+        font-size: 11px;
+        padding: 2px 6px;
+      }
+      
+      #controls input[type="range"] {
+        height: 8px;
+      }
+      #controls input[type="range"]::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+      }
+      
+      #controls select {
+        height: 44px;
+        font-size: 14px;
+        padding: 0 32px 0 12px;
+      }
+      
+      #controls input[type="file"] {
+        height: 44px;
+        font-size: 13px;
+        padding: 10px 12px;
+      }
+      
+      #controls input[type="color"] {
+        height: 44px;
+      }
+      
+      #controls .checkbox-wrapper {
+        min-height: 44px;
+        padding: 8px 0;
+      }
+      #controls .checkbox-wrapper input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+      }
+      #controls .checkbox-wrapper label {
+        font-size: 14px;
+        margin: 0;
+      }
+      
+      #controls .control-group {
+        margin-bottom: 14px;
+      }
+      
+      #controls .preset-grid {
+        gap: 6px;
+      }
+      #controls .preset-grid button {
+        height: 40px;
+        font-size: 13px;
+      }
+      
+      #controls .preview-box {
+        height: 70px;
+      }
+      
+      #controls .section .section-content { display: none; }
+      #controls .section.mobile-expanded .section-content { display: block; }
+      
+      .toast {
+        bottom: 140px;
+        font-size: 14px;
+        padding: 12px 16px;
+      }
+    }
+    
+    /* Small phones */
+    @media (max-width: 380px) {
+      .mobile-toolbar {
+        gap: 6px;
+        padding: 6px;
+      }
+      .mobile-toolbar button {
+        width: 44px;
+        height: 44px;
+      }
+      .mobile-toolbar button svg { width: 20px; height: 20px; }
+      
+      .stats-bar {
+        font-size: 11px;
+        gap: 10px;
+        padding: 6px 10px;
+      }
+    }
+    
+    @media (min-width: 901px) { .mobile-handle, .mobile-toolbar { display: none; } }
+    
+    /* Portrait orientation on mobile - move canvas up */
+    @media (max-width: 900px) and (orientation: portrait) {
+      #canvas-container {
+        padding-top: 0;
+        padding-bottom: 70px;
+        justify-content: flex-start;
+      }
+      .stats-bar {
+        margin-bottom: 4px;
+      }
+      #canvas-wrapper {
+        max-height: calc(100dvh - 150px);
+      }
+      canvas {
+        max-height: calc(100dvh - 150px);
+      }
+    }
   </style>
 </head>
 <body>
   <div id="controls">
     <div class="mobile-handle" id="mobileHandle"><span class="mobile-handle-label">Settings</span></div>
-
-```
-<div class="sidebar-header">
-  <div class="logo">
-    <h1>Vectory</h1>
-    <p class="logo-subtitle">Particle System</p>
-  </div>
-  <div class="header-actions">
-    <button class="ghost" id="shareBtn" title="Share">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
-    </button>
-    <button class="ghost" id="fullscreenBtn" title="Fullscreen">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-    </button>
-  </div>
-</div>
-
-<div class="sidebar-content">
-  <button class="camera-btn secondary" id="webcamBtn" style="width:100%;margin-bottom:8px;">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-    Camera
-  </button>
-  
-  <div class="section">
-    <button class="section-trigger" onclick="toggleSection(this)">Presets<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="preset-grid">
-        <button class="outline" data-preset="matrix">💚 Matrix</button>
-        <button class="outline" data-preset="silk">🌊 Silk</button>
-        <button class="outline" data-preset="fire">🔥 Fire</button>
-        <button class="outline" data-preset="rain">🌧️ Rain</button>
-        <button class="outline" data-preset="neon">💜 Neon</button>
-        <button class="outline" data-preset="speed">⚡ Speed</button>
+    
+    <div class="sidebar-header">
+      <div class="logo">
+        <h1>Vectory</h1>
+        <p class="logo-subtitle">Particle System</p>
+      </div>
+      <div class="header-actions">
+        <button class="ghost" id="shareBtn" title="Share">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+        </button>
+        <button class="ghost" id="fullscreenBtn" title="Fullscreen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
       </div>
     </div>
-  </div>
-  
-  <div class="section">
-    <button class="section-trigger" onclick="toggleSection(this)">Image<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <input type="file" id="imageInput" accept="image/*">
-      <div class="preview-box" id="imagePreview"><span>Source Image</span></div>
-      <div class="preset-grid" style="margin-top:6px;">
-        <button class="outline" id="presetNoise">Noise</button>
-        <button class="outline" id="presetGradient">Gradient</button>
-        <button class="outline" id="presetRadial">Radial</button>
-        <button class="outline" id="preset3DFlow">3D Flow</button>
+    
+    <div class="sidebar-content">
+      <button class="camera-btn secondary" id="webcamBtn" style="width:100%;margin-bottom:8px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+        Camera
+      </button>
+      
+      <div class="section">
+        <button class="section-trigger" onclick="toggleSection(this)">Presets<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="preset-grid">
+            <button class="outline" data-preset="matrix">💚 Matrix</button>
+            <button class="outline" data-preset="silk">🌊 Silk</button>
+            <button class="outline" data-preset="fire">🔥 Fire</button>
+            <button class="outline" data-preset="rain">🌧️ Rain</button>
+            <button class="outline" data-preset="neon">💜 Neon</button>
+            <button class="outline" data-preset="speed">⚡ Speed</button>
+          </div>
+        </div>
       </div>
-      <button class="outline" id="showEdgesBtn" style="width:100%;margin-top:6px;">👁️ Show Edge Map</button>
+      
+      <div class="section">
+        <button class="section-trigger" onclick="toggleSection(this)">Image<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <input type="file" id="imageInput" accept="image/*">
+          <div class="preview-box" id="imagePreview"><span>Source Image</span></div>
+          <div class="preset-grid" style="margin-top:6px;">
+            <button class="outline" id="presetNoise">Noise</button>
+            <button class="outline" id="presetGradient">Gradient</button>
+            <button class="outline" id="presetRadial">Radial</button>
+            <button class="outline" id="preset3DFlow">3D Flow</button>
+          </div>
+          <button class="outline" id="showEdgesBtn" style="width:100%;margin-top:6px;">👁️ Show Edge Map</button>
+        </div>
+      </div>
+      
+      <div class="section">
+        <button class="section-trigger" onclick="toggleSection(this)">Edge Detection<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><label>Method</label><select id="edgeMethod"><option value="1">Sobel</option><option value="2">Canny</option></select></div>
+          <div class="control-group"><label>Edge → Size <span class="value" id="edgeSizeVal">0%</span></label><input type="range" id="edgeSize" min="0" max="100" value="0"></div>
+          <div class="control-group"><label>Edge → Opacity <span class="value" id="edgeOpacityVal">0%</span></label><input type="range" id="edgeOpacity" min="0" max="100" value="0"></div>
+          <div class="control-group"><label>Edge → Attract <span class="value" id="edgeAttrVal">0</span></label><input type="range" id="edgeAttr" min="0" max="100" value="0"></div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <button class="section-trigger" onclick="toggleSection(this)">Mode<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <select id="mode">
+            <option value="1">Particles 2D</option>
+            <option value="2">Static Trails 2D</option>
+            <option value="3">Moving Trails 2D</option>
+            <option value="4" selected>Particles 3D</option>
+            <option value="5">Trails 3D</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="section" id="section3D">
+        <button class="section-trigger" onclick="toggleSection(this)">3D Settings<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><label>Spawn</label><select id="spawn3DMode"><option value="1">Flat</option><option value="2" selected>Depth from Brightness</option><option value="3">Volume</option></select></div>
+          <div class="control-group"><label>Direction</label><select id="dir3DSource"><option value="1">Brightness → Angle</option><option value="2" selected>RGB → XYZ</option></select></div>
+          <div class="control-group"><label>Depth <span class="value" id="depthScaleVal">100</span></label><input type="range" id="depthScale" min="10" max="300" value="100"></div>
+          <div class="control-group"><label>Attraction <span class="value" id="imgAttrVal">0</span></label><input type="range" id="imgAttr" min="0" max="100" value="0"></div>
+          <div class="control-group"><label>Distance <span class="value" id="camDistVal">850</span></label><input type="range" id="camDist" min="100" max="1000" value="850"></div>
+          <div class="control-group"><label>FOV <span class="value" id="fovVal">60°</span></label><input type="range" id="fov" min="30" max="120" value="60"></div>
+        </div>
+      </div>
+      
+      <div class="section collapsed">
+        <button class="section-trigger" onclick="toggleSection(this)">Spawn<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><label>Seed <span class="value" id="seedVal">1</span></label><input type="range" id="seed" min="1" max="9999" value="1"></div>
+          <div class="control-group"><label>Type</label><select id="spawnType"><option value="1" selected>Random</option><option value="2">On Brightness</option></select></div>
+          <div class="control-group"><label>Count <span class="value" id="countVal">1000</span></label><input type="range" id="count" min="1" max="2000" value="1000"></div>
+          <div class="control-group"><label>Cutoff <span class="value" id="cutoffVal">30%</span></label><input type="range" id="cutoff" min="0" max="99" value="30"></div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <button class="section-trigger" onclick="toggleSection(this)">Particle<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><label>Lifetime <span class="value" id="lifetimeVal">100</span></label><input type="range" id="lifetime" min="10" max="500" value="100"></div>
+          <div class="control-group"><label>Size <span class="value" id="sizeVal">3</span></label><input type="range" id="size" min="1" max="30" value="3"></div>
+          <div class="control-group"><label>Speed <span class="value" id="speedVal">2</span></label><input type="range" id="speed" min="0.5" max="20" value="2" step="0.5"></div>
+        </div>
+      </div>
+      
+      <div class="section collapsed" id="section2DDirection" style="display:none;">
+        <button class="section-trigger" onclick="toggleSection(this)">Direction 2D<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><label>Channel</label><select id="channel"><option value="1" selected>Brightness</option><option value="2">Red</option><option value="3">Green</option><option value="4">Blue</option></select></div>
+          <div class="control-group"><label>Shift <span class="value" id="shiftVal">0°</span></label><input type="range" id="shift" min="0" max="360" value="0"></div>
+          <div class="control-group"><label>Fluctuation <span class="value" id="fluctVal">0°</span></label><input type="range" id="fluct" min="0" max="180" value="0"></div>
+          <div class="control-group"><label>Dynamic <span class="value" id="dynFluctVal">0°</span></label><input type="range" id="dynFluct" min="0" max="180" value="0"></div>
+        </div>
+      </div>
+      
+      <div class="section collapsed">
+        <button class="section-trigger" onclick="toggleSection(this)">Forces<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><label>Attraction <span class="value" id="attrForceVal">0</span></label><input type="range" id="attrForce" min="-10" max="10" value="0" step="0.5"></div>
+          <div class="control-group"><label>Angle <span class="value" id="attrAngleVal">0°</span></label><input type="range" id="attrAngle" min="0" max="360" value="0"></div>
+        </div>
+      </div>
+      
+      <div class="section collapsed">
+        <button class="section-trigger" onclick="toggleSection(this)">Color<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><select id="colorMode"><option value="1" selected>Original</option><option value="2">Sample Position</option><option value="3">Custom</option><option value="4">Lifetime Gradient</option><option value="5">Depth Gradient</option></select></div>
+          <div class="control-group"><label>Custom</label><input type="color" id="customColor" value="#ffffff"></div>
+          <div class="control-group"><label>Start / Near</label><input type="color" id="startColor" value="#ffffff"></div>
+          <div class="control-group"><label>End / Far</label><input type="color" id="endColor" value="#e94560"></div>
+        </div>
+      </div>
+      
+      
+      
+      <div class="section collapsed">
+        <button class="section-trigger" onclick="toggleSection(this)">Glow<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><div class="checkbox-wrapper"><input type="checkbox" id="glowEnabled"><label for="glowEnabled">Enable Glow</label></div></div>
+          <div class="control-group"><label>Intensity <span class="value" id="glowIntensityVal">1.0</span></label><input type="range" id="glowIntensity" min="0.1" max="3" value="1" step="0.1"></div>
+          <div class="control-group"><label>Radius <span class="value" id="glowRadiusVal">20</span></label><input type="range" id="glowRadius" min="5" max="50" value="20"></div>
+          <div class="control-group"><label>Threshold <span class="value" id="glowThresholdVal">0%</span></label><input type="range" id="glowThreshold" min="0" max="50" value="0"></div>
+        </div>
+      </div>
+      
+      <div class="section collapsed">
+        <button class="section-trigger" onclick="toggleSection(this)">Background<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="section-content">
+          <div class="control-group"><div class="checkbox-wrapper"><input type="checkbox" id="transparentBg" checked><label for="transparentBg">Transparent</label></div></div>
+          <div class="control-group"><label>Color</label><input type="color" id="bgColor" value="#09090b"></div>
+          <div class="control-group"><label>Fade <span class="value" id="fadeVal">3</span></label><input type="range" id="fade" min="0" max="50" value="3"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sidebar-footer">
+      <button class="secondary" id="resetBtn">Reset</button>
+      <button class="secondary" id="recordBtn">● Rec</button>
+      <button id="saveBtn">Save</button>
     </div>
   </div>
   
-  <div class="section">
-    <button class="section-trigger" onclick="toggleSection(this)">Edge Detection<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><label>Method</label><select id="edgeMethod"><option value="1">Sobel</option><option value="2">Canny</option></select></div>
-      <div class="control-group"><label>Edge → Size <span class="value" id="edgeSizeVal">0%</span></label><input type="range" id="edgeSize" min="0" max="100" value="0"></div>
-      <div class="control-group"><label>Edge → Opacity <span class="value" id="edgeOpacityVal">0%</span></label><input type="range" id="edgeOpacity" min="0" max="100" value="0"></div>
-      <div class="control-group"><label>Edge → Attract <span class="value" id="edgeAttrVal">0</span></label><input type="range" id="edgeAttr" min="0" max="100" value="0"></div>
-    </div>
-  </div>
-  
-  <div class="section">
-    <button class="section-trigger" onclick="toggleSection(this)">Mode<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <select id="mode">
-        <option value="1">Particles 2D</option>
-        <option value="2">Static Trails 2D</option>
-        <option value="3">Moving Trails 2D</option>
-        <option value="4" selected>Particles 3D</option>
-        <option value="5">Trails 3D</option>
-      </select>
-    </div>
-  </div>
-  
-  <div class="section" id="section3D">
-    <button class="section-trigger" onclick="toggleSection(this)">3D Settings<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><label>Spawn</label><select id="spawn3DMode"><option value="1">Flat</option><option value="2" selected>Depth from Brightness</option><option value="3">Volume</option></select></div>
-      <div class="control-group"><label>Direction</label><select id="dir3DSource"><option value="1">Brightness → Angle</option><option value="2" selected>RGB → XYZ</option></select></div>
-      <div class="control-group"><label>Depth <span class="value" id="depthScaleVal">100</span></label><input type="range" id="depthScale" min="10" max="300" value="100"></div>
-      <div class="control-group"><label>Attraction <span class="value" id="imgAttrVal">0</span></label><input type="range" id="imgAttr" min="0" max="100" value="0"></div>
-      <div class="control-group"><label>Distance <span class="value" id="camDistVal">850</span></label><input type="range" id="camDist" min="100" max="1000" value="850"></div>
-      <div class="control-group"><label>FOV <span class="value" id="fovVal">60°</span></label><input type="range" id="fov" min="30" max="120" value="60"></div>
-    </div>
-  </div>
-  
-  <div class="section collapsed">
-    <button class="section-trigger" onclick="toggleSection(this)">Spawn<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><label>Seed <span class="value" id="seedVal">1</span></label><input type="range" id="seed" min="1" max="9999" value="1"></div>
-      <div class="control-group"><label>Type</label><select id="spawnType"><option value="1" selected>Random</option><option value="2">On Brightness</option></select></div>
-      <div class="control-group"><label>Count <span class="value" id="countVal">1000</span></label><input type="range" id="count" min="1" max="2000" value="1000"></div>
-      <div class="control-group"><label>Cutoff <span class="value" id="cutoffVal">30%</span></label><input type="range" id="cutoff" min="0" max="99" value="30"></div>
-    </div>
-  </div>
-  
-  <div class="section">
-    <button class="section-trigger" onclick="toggleSection(this)">Particle<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><label>Lifetime <span class="value" id="lifetimeVal">100</span></label><input type="range" id="lifetime" min="10" max="500" value="100"></div>
-      <div class="control-group"><label>Size <span class="value" id="sizeVal">3</span></label><input type="range" id="size" min="1" max="30" value="3"></div>
-      <div class="control-group"><label>Speed <span class="value" id="speedVal">2</span></label><input type="range" id="speed" min="0.5" max="20" value="2" step="0.5"></div>
-    </div>
-  </div>
-  
-  <div class="section collapsed" id="section2DDirection" style="display:none;">
-    <button class="section-trigger" onclick="toggleSection(this)">Direction 2D<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><label>Channel</label><select id="channel"><option value="1" selected>Brightness</option><option value="2">Red</option><option value="3">Green</option><option value="4">Blue</option></select></div>
-      <div class="control-group"><label>Shift <span class="value" id="shiftVal">0°</span></label><input type="range" id="shift" min="0" max="360" value="0"></div>
-      <div class="control-group"><label>Fluctuation <span class="value" id="fluctVal">0°</span></label><input type="range" id="fluct" min="0" max="180" value="0"></div>
-      <div class="control-group"><label>Dynamic <span class="value" id="dynFluctVal">0°</span></label><input type="range" id="dynFluct" min="0" max="180" value="0"></div>
-    </div>
-  </div>
-  
-  <div class="section collapsed">
-    <button class="section-trigger" onclick="toggleSection(this)">Forces<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><label>Attraction <span class="value" id="attrForceVal">0</span></label><input type="range" id="attrForce" min="-10" max="10" value="0" step="0.5"></div>
-      <div class="control-group"><label>Angle <span class="value" id="attrAngleVal">0°</span></label><input type="range" id="attrAngle" min="0" max="360" value="0"></div>
-    </div>
-  </div>
-  
-  <div class="section collapsed">
-    <button class="section-trigger" onclick="toggleSection(this)">Color<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><select id="colorMode"><option value="1" selected>Original</option><option value="2">Sample Position</option><option value="3">Custom</option><option value="4">Lifetime Gradient</option><option value="5">Depth Gradient</option></select></div>
-      <div class="control-group"><label>Custom</label><input type="color" id="customColor" value="#ffffff"></div>
-      <div class="control-group"><label>Start / Near</label><input type="color" id="startColor" value="#ffffff"></div>
-      <div class="control-group"><label>End / Far</label><input type="color" id="endColor" value="#e94560"></div>
-    </div>
-  </div>
-  
-  
-  
-  <div class="section collapsed">
-    <button class="section-trigger" onclick="toggleSection(this)">Glow<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><div class="checkbox-wrapper"><input type="checkbox" id="glowEnabled"><label for="glowEnabled">Enable Glow</label></div></div>
-      <div class="control-group"><label>Intensity <span class="value" id="glowIntensityVal">1.0</span></label><input type="range" id="glowIntensity" min="0.1" max="3" value="1" step="0.1"></div>
-      <div class="control-group"><label>Radius <span class="value" id="glowRadiusVal">20</span></label><input type="range" id="glowRadius" min="5" max="50" value="20"></div>
-      <div class="control-group"><label>Threshold <span class="value" id="glowThresholdVal">0%</span></label><input type="range" id="glowThreshold" min="0" max="50" value="0"></div>
-    </div>
-  </div>
-  
-  <div class="section collapsed">
-    <button class="section-trigger" onclick="toggleSection(this)">Background<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="section-content">
-      <div class="control-group"><div class="checkbox-wrapper"><input type="checkbox" id="transparentBg" checked><label for="transparentBg">Transparent</label></div></div>
-      <div class="control-group"><label>Color</label><input type="color" id="bgColor" value="#09090b"></div>
-      <div class="control-group"><label>Fade <span class="value" id="fadeVal">3</span></label><input type="range" id="fade" min="0" max="50" value="3"></div>
-    </div>
-  </div>
-</div>
-
-<div class="sidebar-footer">
-  <button class="secondary" id="resetBtn">Reset</button>
-  <button class="secondary" id="recordBtn">● Rec</button>
-  <button id="saveBtn">Save</button>
-</div>
-```
-
-  </div>
-
   <div id="canvas-container">
     <div class="stats-bar">
       <div class="stat"><span class="stat-label">FPS</span><span class="stat-value fps" id="fpsDisplay">--</span></div>
@@ -810,14 +803,14 @@ body.fullscreen .mobile-toolbar { display: none !important; }
       </div>
     </div>
   </div>
-
+  
   <div class="mobile-toolbar" id="mobileToolbar">
     <button class="secondary" id="mobileWebcamBtn" title="Camera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>
     <button class="secondary" id="mobileRecordBtn" title="Record"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg></button>
     <button id="mobileSaveBtn" title="Save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>
     <button class="secondary" id="mobileFullscreenBtn" title="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>
   </div>
-
+  
   <div class="toast" id="toast"><div class="toast-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><span id="toastMessage">Saved!</span></div>
 
 <script>
@@ -1338,6 +1331,5 @@ window.addEventListener('load',init);
 window.addEventListener('resize',updateCanvasSize);
 window.addEventListener('orientationchange', () => setTimeout(updateCanvasSize, 100));
 </script>
-
 </body>
 </html>
