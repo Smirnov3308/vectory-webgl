@@ -284,16 +284,16 @@
           <div class="preset-grid">
             <button class="outline" data-preset="matrix">💚 Matrix</button>
             <button class="outline" data-preset="silk">🧵 Silk</button>
+            <button class="outline" data-preset="plasma">⚡ Plasma</button>
+            <button class="outline" data-preset="particles">✨ Particles</button>
             <button class="outline" data-preset="fire">🔥 Fire</button>
             <button class="outline" data-preset="rain">🌧️ Rain</button>
-            <button class="outline" data-preset="neon">💜 Neon</button>
-            <button class="outline" data-preset="speed">⚡ Speed</button>
+            <button class="outline" data-preset="speed">💨 Speed</button>
             <button class="outline" data-preset="ocean">🌊 Ocean</button>
-            <button class="outline" data-preset="snow">❄️ Snow</button>
             <button class="outline" data-preset="aurora">🌈 Aurora</button>
             <button class="outline" data-preset="cyber">🤖 Cyber</button>
-            <button class="outline" data-preset="gold">✨ Gold</button>
-            <button class="outline" data-preset="plasma">⚡ Plasma</button>
+            <button class="outline" data-preset="gold">🪙 Gold</button>
+            <button class="outline" data-preset="neon">💜 Neon</button>
           </div>
         </div>
       </div>
@@ -438,16 +438,16 @@
   <div class="mobile-presets" id="mobilePresets">
     <button data-preset="matrix" class="active">💚 Matrix</button>
     <button data-preset="silk">🧵 Silk</button>
+    <button data-preset="plasma">⚡ Plasma</button>
+    <button data-preset="particles">✨ Particles</button>
     <button data-preset="fire">🔥 Fire</button>
     <button data-preset="rain">🌧️ Rain</button>
-    <button data-preset="neon">💜 Neon</button>
-    <button data-preset="speed">⚡ Speed</button>
+    <button data-preset="speed">💨 Speed</button>
     <button data-preset="ocean">🌊 Ocean</button>
-    <button data-preset="snow">❄️ Snow</button>
     <button data-preset="aurora">🌈 Aurora</button>
     <button data-preset="cyber">🤖 Cyber</button>
-    <button data-preset="gold">✨ Gold</button>
-    <button data-preset="plasma">⚡ Plasma</button>
+    <button data-preset="gold">🪙 Gold</button>
+    <button data-preset="neon">💜 Neon</button>
   </div>
   
   <!-- Mobile toolbar -->
@@ -479,7 +479,7 @@ function toggleSection(t){t.parentElement.classList.toggle('collapsed');}
 
 const defaultSettings={mode:4,seed:1,spawnType:1,count:1000,cutoff:30,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:0,lifetime:100,size:3,speed:2,channel:1,shift:0,fluct:0,dynFluct:0,attrForce:0,attrAngle:0,colorMode:1,customColor:'#ffffff',startColor:'#ffffff',endColor:'#e94560',transparentBg:true,bgColor:'#09090b',fade:3,camDist:850,fov:60,depthScale:100,spawn3DMode:2,dir3DSource:2,imgAttr:0,glowEnabled:false,glowIntensity:1,glowRadius:20,glowThreshold:0};
 let settings={...defaultSettings};
-const presetNames=['matrix','silk','fire','rain','neon','speed','ocean','snow','aurora','cyber','gold','plasma'];
+const presetNames=['matrix','silk','plasma','particles','fire','rain','speed','ocean','aurora','cyber','gold','neon'];
 let currentPresetIndex=0;
 
 const presets={
@@ -490,7 +490,7 @@ const presets={
   neon:{mode:5,count:80,size:3,speed:2,lifetime:80,colorMode:4,startColor:'#ec4899',endColor:'#3b82f6',depthScale:150,fade:15,edgeMethod:2,edgeSize:100,edgeOpacity:75,edgeAttr:33,glowEnabled:true,glowIntensity:1.0,glowRadius:15},
   speed:{mode:3,count:100,size:2,speed:8,lifetime:30,colorMode:4,startColor:'#ffffff',endColor:'#6366f1',fade:25,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:67,glowEnabled:false},
   ocean:{mode:2,count:600,size:2,speed:2,lifetime:150,colorMode:4,startColor:'#22d3ee',endColor:'#0369a1',attrForce:2,attrAngle:180,fluct:45,dynFluct:25,edgeMethod:2,edgeSize:50,edgeOpacity:60,edgeAttr:20,glowEnabled:true,glowIntensity:0.8,glowRadius:15},
-  snow:{mode:1,count:300,size:3,speed:1,lifetime:200,colorMode:3,customColor:'#ffffff',attrForce:2,attrAngle:270,fluct:30,dynFluct:40,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:0,glowEnabled:false,transparentBg:false,bgColor:'#1e293b'},
+  particles:{mode:1,count:500,size:3,speed:5,lifetime:100,colorMode:1,attrForce:2,attrAngle:270,fluct:30,dynFluct:40,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:0,glowEnabled:false,transparentBg:false,bgColor:'#000000'},
   aurora:{mode:3,count:80,size:4,speed:1,lifetime:100,colorMode:4,startColor:'#34d399',endColor:'#a855f7',attrForce:-1,attrAngle:90,fluct:20,fade:30,edgeMethod:2,edgeSize:80,edgeOpacity:50,edgeAttr:15,glowEnabled:true,glowIntensity:2,glowRadius:30},
   cyber:{mode:5,count:120,size:2,speed:5,lifetime:50,colorMode:4,startColor:'#f472b6',endColor:'#06b6d4',depthScale:120,fade:20,edgeMethod:2,edgeSize:100,edgeOpacity:80,edgeAttr:40,glowEnabled:true,glowIntensity:2,glowRadius:12},
   gold:{mode:4,count:800,size:3,speed:2,lifetime:120,colorMode:4,startColor:'#fcd34d',endColor:'#b45309',depthScale:100,fluct:40,dynFluct:20,spawn3DMode:2,glowEnabled:true,glowIntensity:1.8,glowRadius:20},
@@ -503,6 +503,13 @@ let glowProgram,compositeProgram,quadBuffer,framebufferA,framebufferB,framebuffe
 let glowLocs={},compositeLocs={},lineLocs={},mainLocs={};
 // Reusable buffers for static trails
 const STATIC_MAX=500000;
+// Sin/cos lookup table (720 entries = 0.5 degree precision)
+const TRIG_SIZE=720,sinLUT=new Float32Array(TRIG_SIZE),cosLUT=new Float32Array(TRIG_SIZE);
+for(let i=0;i<TRIG_SIZE;i++){const a=i*Math.PI*2/TRIG_SIZE;sinLUT[i]=Math.sin(a);cosLUT[i]=Math.cos(a);}
+const fastSin=a=>{const i=((a%(Math.PI*2)+Math.PI*2)%(Math.PI*2))/(Math.PI*2)*TRIG_SIZE|0;return sinLUT[i%TRIG_SIZE];};
+const fastCos=a=>{const i=((a%(Math.PI*2)+Math.PI*2)%(Math.PI*2))/(Math.PI*2)*TRIG_SIZE|0;return cosLUT[i%TRIG_SIZE];};
+// Edge detection frame skip
+let edgeFrameCount=0;
 let staticPos=new Float32Array(STATIC_MAX*3),staticCol=new Float32Array(STATIC_MAX*4),staticSiz=new Float32Array(STATIC_MAX);
 // Cached color conversions
 let cachedColors={},lastColorSettings='';
@@ -602,10 +609,24 @@ if(cachedColors.key!==colorKey){cachedColors.key=colorKey;cachedColors.bg=hexToR
 const bg=cachedColors.bg,g1=cachedColors.g1,g2=cachedColors.g2,cc=cachedColors.cc;
 if(settings.glowEnabled){gl.bindFramebuffer(gl.FRAMEBUFFER,framebufferMain);gl.viewport(0,0,canvasWidth,canvasHeight);}gl.clearColor(settings.transparentBg?0:bg.r/255,settings.transparentBg?0:bg.g/255,settings.transparentBg?0:bg.b/255,settings.transparentBg?0:1);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(program);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniformMatrix4fv(uProjection,false,orthoMatrix(-canvasWidth/2,canvasWidth/2,-canvasHeight/2,canvasHeight/2,-1000,1000));gl.uniformMatrix4fv(uView,false,identityMatrix());gl.uniform2f(uResolution,canvasWidth,canvasHeight);gl.uniform1f(uIs3D,0);
 // Pre-compute invariants
-const ar=settings.attrAngle*Math.PI/180,ac=Math.cos(ar),as=Math.sin(ar),maxSteps=Math.floor(settings.lifetime*settings.speed),edgeOpacityMult=settings.edgeOpacity/100*0.8,edgeSizeMult=settings.edgeSize/100,edgeAttrF=settings.edgeAttr*0.015,shiftRad=settings.shift*Math.PI/180,nf=Math.round(settings.fluct*0.708),dynFluctNf=Math.round(settings.dynFluct*0.708),useEdgeAttr=edgeAttrF>0,useDynFluct=settings.dynFluct>0,useAttrForce=settings.attrForce!==0,attrFX=ac*settings.attrForce*0.1,attrFY=as*settings.attrForce*0.1,cm=settings.colorMode,hwC=canvasWidth/2,hhC=canvasHeight/2,g1r=g1.r,g1g=g1.g,g1b=g1.b,g2r=g2.r-g1r,g2g=g2.g-g1g,g2b=g2.b-g1b,ccr=cc.r/255,ccg=cc.g/255,ccb=cc.b/255,baseSize=settings.size,sizeMult=edgeSizeMult*3.5;
+const ar=settings.attrAngle*Math.PI/180,ac=fastCos(ar),as=fastSin(ar),maxSteps=(settings.lifetime*settings.speed)|0,edgeOpacityMult=settings.edgeOpacity/100*0.8,edgeSizeMult=settings.edgeSize/100,edgeAttrF=settings.edgeAttr*0.015,shiftRad=settings.shift*Math.PI/180,nf=Math.round(settings.fluct*0.708),dynFluctNf=Math.round(settings.dynFluct*0.708),useEdgeAttr=edgeAttrF>0&&edgeData,useDynFluct=settings.dynFluct>0,useAttrForce=settings.attrForce!==0,attrFX=ac*settings.attrForce*0.1,attrFY=as*settings.attrForce*0.1,cm=settings.colorMode,hwC=canvasWidth/2,hhC=canvasHeight/2,g1r=g1.r,g1g=g1.g,g1b=g1.b,g2r=g2.r-g1r,g2g=g2.g-g1g,g2b=g2.b-g1b,ccr=cc.r/255,ccg=cc.g/255,ccb=cc.b/255,baseSize=settings.size,sizeMult=edgeSizeMult*3.5;
+// Inline coefficients
+const sxMult=sourceWidth/canvasWidth,syMult=sourceHeight/canvasHeight,swM1=sourceWidth-1,shM1=sourceHeight-1,hasSource=!!sourceData,hasEdge=!!edgeData;
 let pi=0;
-for(let i=0;i<settings.count&&pi<STATIC_MAX;i++){const key=settings.seed*10000+i;let sx,sy;if(settings.spawnType===2&&brightnessSamplerReady){const s=brightnessSamples[Math.floor(hashFloat2(key,100)*brightnessSamples.length)];sx=s.x;sy=s.y;}else{sx=hashRange(key,1,0,canvasWidth);sy=hashRange(key,2,0,canvasHeight);}let x=sx-hwC,y=sy-hhC;const sp=getSourcePixel(sx,sy),spr=sp.r/255,spg=sp.g/255,spb=sp.b/255,spd=settings.speed*(0.5+hashFloat2(key,3)*0.5),lf=nf>0?(hashFluct(key,2)*nf/128)|0:0,lfRad=lf*Math.PI/180;
-for(let step=0;step<maxSteps&&pi<STATIC_MAX;step++){const cx=x+hwC,cy=y+hhC;if(cx<0||cx>=canvasWidth||cy<0||cy>=canvasHeight)break;const p=getSourcePixel(cx,cy),br=0.2126*p.r+0.7152*p.g+0.0722*p.b,ch=settings.channel===1?br:p.r;let df=0;if(useDynFluct)df=(hashFluct(key*10000+step,3)*dynFluctNf/128)|0;const ang=(ch/255)*6.283185307+shiftRad+lfRad+df*Math.PI/180;const edge=getEdgeStrength(cx,cy),edgeAlpha=edgeOpacityMult>0?(0.02+edge*0.98)*edgeOpacityMult+(1-edgeOpacityMult):1,edgeSize=baseSize*(1+edge*sizeMult);const pi3=pi*3,pi4=pi*4;staticPos[pi3]=x;staticPos[pi3+1]=y;staticPos[pi3+2]=0;const t=step/maxSteps;if(cm===1){staticCol[pi4]=spr;staticCol[pi4+1]=spg;staticCol[pi4+2]=spb;}else if(cm===2){staticCol[pi4]=p.r/255;staticCol[pi4+1]=p.g/255;staticCol[pi4+2]=p.b/255;}else if(cm===4){staticCol[pi4]=(g1r+g2r*t)/255;staticCol[pi4+1]=(g1g+g2g*t)/255;staticCol[pi4+2]=(g1b+g2b*t)/255;}else{staticCol[pi4]=ccr;staticCol[pi4+1]=ccg;staticCol[pi4+2]=ccb;}staticCol[pi4+3]=(1-t)*edgeAlpha;staticSiz[pi]=edgeSize;pi++;let vx=Math.cos(ang)*spd,vy=Math.sin(ang)*spd;if(useAttrForce){vx+=attrFX;vy+=attrFY;}if(useEdgeAttr){const eg=getEdgeGradient(cx,cy);vx+=eg.gx*edgeAttrF;vy-=eg.gy*edgeAttrF;}x+=vx;y+=vy;}}
+for(let i=0;i<settings.count&&pi<STATIC_MAX;i++){const key=settings.seed*10000+i;let sx,sy;if(settings.spawnType===2&&brightnessSamplerReady){const s=brightnessSamples[(hashFloat2(key,100)*brightnessSamples.length)|0];sx=s.x;sy=s.y;}else{sx=hashRange(key,1,0,canvasWidth);sy=hashRange(key,2,0,canvasHeight);}let x=sx-hwC,y=sy-hhC;
+// Inline getSourcePixel for spawn
+let spr=0.5,spg=0.5,spb=0.5;
+if(hasSource){const psx=(sx*sxMult)|0,psy=((canvasHeight-sy)*syMult)|0,pidx=((psy<0?0:psy>shM1?shM1:psy)*sourceWidth+(psx<0?0:psx>swM1?swM1:psx))*4;spr=sourceData[pidx]/255;spg=sourceData[pidx+1]/255;spb=sourceData[pidx+2]/255;}
+const spd=settings.speed*(0.5+hashFloat2(key,3)*0.5),lf=nf>0?(hashFluct(key,2)*nf/128)|0:0,lfRad=lf*Math.PI/180;
+for(let step=0;step<maxSteps&&pi<STATIC_MAX;step++){const cx=x+hwC,cy=y+hhC;if(cx<0||cx>=canvasWidth||cy<0||cy>=canvasHeight)break;
+// Inline getSourcePixel
+let pr=128,pg=128,pb=128;
+if(hasSource){const psx=(cx*sxMult)|0,psy=((canvasHeight-cy)*syMult)|0,pidx=((psy<0?0:psy>shM1?shM1:psy)*sourceWidth+(psx<0?0:psx>swM1?swM1:psx))*4;pr=sourceData[pidx];pg=sourceData[pidx+1];pb=sourceData[pidx+2];}
+const br=0.2126*pr+0.7152*pg+0.0722*pb,ch=settings.channel===1?br:pr;let df=0;if(useDynFluct)df=(hashFluct(key*10000+step,3)*dynFluctNf/128)|0;const ang=(ch/255)*6.283185307+shiftRad+lfRad+df*Math.PI/180;
+// Inline getEdgeStrength
+let edge=0;
+if(hasEdge){const esx=(cx*sxMult)|0,esy=((canvasHeight-cy)*syMult)|0,eidx=(esy<0?0:esy>shM1?shM1:esy)*sourceWidth+(esx<0?0:esx>swM1?swM1:esx);edge=edgeData[eidx]||0;}
+const edgeAlpha=edgeOpacityMult>0?(0.02+edge*0.98)*edgeOpacityMult+(1-edgeOpacityMult):1,edgeSize=baseSize*(1+edge*sizeMult);const pi3=pi*3,pi4=pi*4;staticPos[pi3]=x;staticPos[pi3+1]=y;staticPos[pi3+2]=0;const t=step/maxSteps;if(cm===1){staticCol[pi4]=spr;staticCol[pi4+1]=spg;staticCol[pi4+2]=spb;}else if(cm===2){staticCol[pi4]=pr/255;staticCol[pi4+1]=pg/255;staticCol[pi4+2]=pb/255;}else if(cm===4){staticCol[pi4]=(g1r+g2r*t)/255;staticCol[pi4+1]=(g1g+g2g*t)/255;staticCol[pi4+2]=(g1b+g2b*t)/255;}else{staticCol[pi4]=ccr;staticCol[pi4+1]=ccg;staticCol[pi4+2]=ccb;}staticCol[pi4+3]=(1-t)*edgeAlpha;staticSiz[pi]=edgeSize;pi++;let vx=fastCos(ang)*spd,vy=fastSin(ang)*spd;if(useAttrForce){vx+=attrFX;vy+=attrFY;}if(useEdgeAttr){const eg=getEdgeGradient(cx,cy);vx+=eg.gx*edgeAttrF;vy-=eg.gy*edgeAttrF;}x+=vx;y+=vy;}}
 gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);gl.bufferData(gl.ARRAY_BUFFER,staticPos.subarray(0,pi*3),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(mainLocs.aPos);gl.vertexAttribPointer(mainLocs.aPos,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,staticCol.subarray(0,pi*4),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(mainLocs.aCol);gl.vertexAttribPointer(mainLocs.aCol,4,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,sizeBuffer);gl.bufferData(gl.ARRAY_BUFFER,staticSiz.subarray(0,pi),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(mainLocs.aSiz);gl.vertexAttribPointer(mainLocs.aSiz,1,gl.FLOAT,false,0,0);gl.drawArrays(gl.POINTS,0,pi);if(settings.glowEnabled){gl.bindFramebuffer(gl.FRAMEBUFFER,null);applyGlow();compositeGlow();}}
 
 function mainLoop(){frameCount++;const now=performance.now();if(now-lastTime>=500){fps=Math.round(frameCount/((now-lastTime)/1000));document.getElementById('fpsDisplay').textContent=fps;document.getElementById('particleCount').textContent=particleCount;document.getElementById('mobileFps').textContent=fps;document.getElementById('mobileParticleCount').textContent=particleCount;frameCount=0;lastTime=now;}if(useWebcam)updateFromWebcam();if(settings.mode===2){renderStaticTrails();}else{const spawn=Math.min(settings.count,MAX_PARTICLES-particleCount);for(let i=0;i<spawn;i++)spawnParticle(i);updateParticles();render();}requestAnimationFrame(mainLoop);}
@@ -622,7 +643,7 @@ function updatePreview(){if(!sourceData)return;const c=document.createElement('c
 async function startWebcam(facingMode='user'){try{if(webcam){webcam.srcObject?.getTracks().forEach(t=>t.stop());webcam=null;}const stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:256},height:{ideal:256},facingMode:facingMode},audio:false});webcam=document.createElement('video');webcam.srcObject=stream;webcam.setAttribute('playsinline','');webcam.muted=true;await webcam.play();useWebcam=true;cameraFacingMode=facingMode;sourceWidth=256;sourceHeight=256;updateCanvasSize();document.getElementById('webcamBtn').classList.add('active');document.getElementById('webcamBtn').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Active';document.getElementById('mobileWebcamBtn').classList.add('active');document.getElementById('mobileFlipCamBtn').style.display='flex';document.getElementById('imagePreview').innerHTML='<span>📷 Live</span>';return true;}catch(e){alert('Camera error: '+e.message);return false;}}
 function stopWebcam(){if(webcam){webcam.srcObject?.getTracks().forEach(t=>t.stop());webcam=null;}useWebcam=false;document.getElementById('webcamBtn').classList.remove('active');document.getElementById('webcamBtn').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Camera';document.getElementById('mobileWebcamBtn').classList.remove('active');document.getElementById('mobileFlipCamBtn').style.display='none';}
 function flipCamera(){startWebcam(cameraFacingMode==='user'?'environment':'user');}
-function updateFromWebcam(){if(!webcam||!useWebcam)return;const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');if(cameraFacingMode==='user'){ctx.translate(256,0);ctx.scale(-1,1);}ctx.drawImage(webcam,0,0,256,256);sourceData=new Uint8Array(ctx.getImageData(0,0,256,256).data);sourceWidth=256;sourceHeight=256;computeEdgeMap();}
+function updateFromWebcam(){if(!webcam||!useWebcam)return;const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');if(cameraFacingMode==='user'){ctx.translate(256,0);ctx.scale(-1,1);}ctx.drawImage(webcam,0,0,256,256);sourceData=new Uint8Array(ctx.getImageData(0,0,256,256).data);sourceWidth=256;sourceHeight=256;if(++edgeFrameCount%2===0)computeEdgeMap();}
 
 function startRecording(){recordedChunks=[];const stream=canvas.captureStream(30);let mimeType='video/webm';mediaRecorder=new MediaRecorder(stream,{mimeType});mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordedChunks.push(e.data);};mediaRecorder.onstop=()=>{const blob=new Blob(recordedChunks,{type:mimeType}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`vectory-${Date.now()}.webm`;a.click();showToast('Video saved!');};mediaRecorder.start();document.getElementById('recordBtn').classList.add('recording');document.getElementById('recordBtn').textContent='■ Stop';document.getElementById('mobileRecordBtn').classList.add('recording');}
 function stopRecording(){if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();document.getElementById('recordBtn').classList.remove('recording');document.getElementById('recordBtn').textContent='● Rec';document.getElementById('mobileRecordBtn').classList.remove('recording');}
@@ -633,7 +654,7 @@ function loadSettingsFromURL(){const params=new URLSearchParams(location.search)
 function toggleFullscreen(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();}
 function resetParticles(){particleCount=0;particleIdCounter=0;for(let i=0;i<MAX_PARTICLES;i++){trailCounts[i]=0;trailHeads[i]=0;}buildBrightnessSampler();}
 
-function applyPreset(name){const p=presets[name];if(!p)return;Object.assign(settings,p);if(window.innerWidth<=900&&settings.mode>=4)settings.camDist=350;syncUI();resetParticles();currentPresetIndex=presetNames.indexOf(name);updateMobilePresetButtons();showToast(`${name} preset`);}
+function applyPreset(name){const p=presets[name];if(!p)return;Object.assign(settings,defaultSettings,p);if(window.innerWidth<=900&&settings.mode>=4)settings.camDist=350;syncUI();resetParticles();currentPresetIndex=presetNames.indexOf(name);updateMobilePresetButtons();showToast(`${name} preset`);}
 function updateMobilePresetButtons(){document.querySelectorAll('.mobile-presets button').forEach(btn=>{btn.classList.toggle('active',btn.dataset.preset===presetNames[currentPresetIndex]);});}
 
 function syncUI(){document.getElementById('mode').value=settings.mode;document.getElementById('edgeMethod').value=settings.edgeMethod;document.getElementById('edgeSize').value=settings.edgeSize;document.getElementById('edgeSizeVal').textContent=settings.edgeSize+'%';document.getElementById('edgeOpacity').value=settings.edgeOpacity;document.getElementById('edgeOpacityVal').textContent=settings.edgeOpacity+'%';document.getElementById('edgeAttr').value=settings.edgeAttr;document.getElementById('edgeAttrVal').textContent=settings.edgeAttr;document.getElementById('spawn3DMode').value=settings.spawn3DMode;document.getElementById('dir3DSource').value=settings.dir3DSource;document.getElementById('imgAttr').value=settings.imgAttr;document.getElementById('imgAttrVal').textContent=settings.imgAttr;document.getElementById('channel').value=settings.channel;document.getElementById('shift').value=settings.shift;document.getElementById('shiftVal').textContent=settings.shift+'°';document.getElementById('fluct').value=settings.fluct;document.getElementById('fluctVal').textContent=settings.fluct+'°';document.getElementById('dynFluct').value=settings.dynFluct;document.getElementById('dynFluctVal').textContent=settings.dynFluct+'°';document.getElementById('attrForce').value=settings.attrForce;document.getElementById('attrForceVal').textContent=settings.attrForce;document.getElementById('attrAngle').value=settings.attrAngle;document.getElementById('attrAngleVal').textContent=settings.attrAngle+'°';document.getElementById('seed').value=settings.seed;document.getElementById('seedVal').textContent=settings.seed;document.getElementById('spawnType').value=settings.spawnType;document.getElementById('cutoff').value=settings.cutoff;document.getElementById('cutoffVal').textContent=settings.cutoff+'%';document.getElementById('count').value=settings.count;document.getElementById('countVal').textContent=settings.count;document.getElementById('lifetime').value=settings.lifetime;document.getElementById('lifetimeVal').textContent=settings.lifetime;document.getElementById('size').value=settings.size;document.getElementById('sizeVal').textContent=settings.size;document.getElementById('speed').value=settings.speed;document.getElementById('speedVal').textContent=settings.speed;document.getElementById('depthScale').value=settings.depthScale;document.getElementById('depthScaleVal').textContent=settings.depthScale;document.getElementById('camDist').value=settings.camDist;document.getElementById('camDistVal').textContent=settings.camDist;document.getElementById('fov').value=settings.fov;document.getElementById('fovVal').textContent=settings.fov+'°';document.getElementById('colorMode').value=settings.colorMode;document.getElementById('customColor').value=settings.customColor;document.getElementById('startColor').value=settings.startColor;document.getElementById('endColor').value=settings.endColor;document.getElementById('glowEnabled').checked=settings.glowEnabled;document.getElementById('glowIntensity').value=settings.glowIntensity;document.getElementById('glowIntensityVal').textContent=settings.glowIntensity.toFixed(1);document.getElementById('glowRadius').value=settings.glowRadius;document.getElementById('glowRadiusVal').textContent=settings.glowRadius;document.getElementById('transparentBg').checked=settings.transparentBg;document.getElementById('bgColor').value=settings.bgColor;document.getElementById('fade').value=settings.fade;document.getElementById('fadeVal').textContent=settings.fade;document.getElementById('section3D').style.display=settings.mode>=4?'block':'none';document.getElementById('qSpeed').value=settings.speed;document.getElementById('qSpeedVal').textContent=settings.speed;document.getElementById('qSize').value=settings.size;document.getElementById('qSizeVal').textContent=settings.size;document.getElementById('qCount').value=settings.count;document.getElementById('qCountVal').textContent=settings.count;document.getElementById('rotateHint').classList.toggle('hidden',settings.mode<4||hintInteracted);}
