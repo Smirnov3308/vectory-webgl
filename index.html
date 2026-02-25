@@ -189,13 +189,13 @@ function getPvCanvas(w,h){if(!pvOffscreen||pvOffscreen.width!==w||pvOffscreen.he
 let lastObjURL=null;
 function revokeObjURL(){if(lastObjURL){URL.revokeObjectURL(lastObjURL);lastObjURL=null;}}
 
-const defaultSettings={mode:4,seed:1,spawnType:1,count:1000,cutoff:30,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:0,lifetime:100,size:3,speed:2,channel:1,shift:0,fluct:0,dynFluct:0,attrForce:0,attrAngle:0,colorMode:1,customColor:'#ffffff',startColor:'#ffffff',endColor:'#e94560',transparentBg:true,bgColor:'#09090b',fade:3,camDist:850,fov:60,depthScale:100,spawn3DMode:2,dir3DSource:2,imgAttr:0,glowEnabled:false,glowIntensity:1,glowRadius:20,glowThreshold:0};
+const defaultSettings={mode:4,seed:1,spawnType:1,count:1000,cutoff:30,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:0,lifetime:100,size:3,speed:2,channel:1,shift:0,fluct:0,dynFluct:0,attrForce:0,attrAngle:0,colorMode:1,customColor:'#ffffff',startColor:'#ffffff',endColor:'#e94560',transparentBg:false,bgColor:'#000000',fade:3,camDist:850,fov:60,depthScale:100,spawn3DMode:2,dir3DSource:2,imgAttr:0,glowEnabled:false,glowIntensity:1,glowRadius:20,glowThreshold:0};
 let settings={...defaultSettings};
 const presetNames=['matrix','particles','rain'];
 let currentPresetIndex=0;
 const presets={
   matrix:{mode:2,count:800,size:2,speed:4,lifetime:100,colorMode:4,startColor:'#22c55e',endColor:'#052e16',attrForce:3,attrAngle:270,fluct:122,dynFluct:67,edgeMethod:2,edgeSize:28,edgeOpacity:100,edgeAttr:6,glowEnabled:true,glowIntensity:3,glowRadius:5},
-  particles:{mode:1,count:500,size:3,speed:5,lifetime:100,colorMode:1,attrForce:2,attrAngle:270,fluct:30,dynFluct:40,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:0,glowEnabled:false,transparentBg:false,bgColor:'#000000'},
+  particles:{mode:1,count:500,size:3,speed:5,lifetime:100,colorMode:1,attrForce:2,attrAngle:270,fluct:30,dynFluct:40,edgeMethod:1,edgeSize:0,edgeOpacity:0,edgeAttr:0,glowEnabled:false},
   rain:{mode:3,count:300,size:2,speed:6,lifetime:40,colorMode:1,attrForce:6,attrAngle:270,fade:8,edgeMethod:2,edgeSize:50,edgeOpacity:80,edgeAttr:0,glowEnabled:false}
 };
 
@@ -319,7 +319,7 @@ function saveImage(){showFlash();playSound();canvas.toBlob(blob=>{if(!blob){show
 function getCanvasBlob(){return new Promise(r=>canvas.toBlob(b=>r(b),'image/png'));}
 function closeShareDropdown(){document.getElementById('shareDropdown').style.display='none';}
 async function shareToSocial(url){showFlash();const blob=await getCanvasBlob();if(blob){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='vectory-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}window.open(url,'_blank');closeShareDropdown();showToast('Image saved!');}
-async function shareImage(){if(window.innerWidth>900){const dd=document.getElementById('shareDropdown');dd.style.display=dd.style.display==='none'?'block':'none';return;}try{const blob=await getCanvasBlob();if(!blob){saveImage();return;}const file=new File([blob],'vectory.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Vectory'});return;}saveImage();}catch(e){if(e.name!=='AbortError')saveImage();}}
+async function shareImage(){if(window.innerWidth>900){const dd=document.getElementById('shareDropdown');dd.style.display=dd.style.display==='none'?'block':'none';return;}try{const blob=await getCanvasBlob();if(!blob){saveImage();return;}const file=new File([blob],'vectory.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Vectory',url:location.href});return;}saveImage();}catch(e){if(e.name!=='AbortError')saveImage();}}
 function toggleFullscreen(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();}
 function resetParticles(){particleCount=0;particleIdCounter=0;for(let i=0;i<MAX_PARTICLES;i++){trailCounts[i]=0;trailHeads[i]=0;}buildBrightnessSampler();}
 function applyPreset(name){const p=presets[name];if(!p)return;Object.assign(settings,defaultSettings,p);if(window.innerWidth<=900&&settings.mode>=4)settings.camDist=1000;syncUI();resetParticles();currentPresetIndex=presetNames.indexOf(name);updateMobilePresetButtons();showToast(`${name} preset`);}
